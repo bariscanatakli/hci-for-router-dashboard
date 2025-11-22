@@ -27,6 +27,7 @@ const navItems = [
 
 export function Topbar() {
   const [query, setQuery] = useState("");
+  const [searchFocused, setSearchFocused] = useState(false);
   const suggestions = useMemo(() => {
     const pool = [
       { label: "Go to Devices", href: "/devices" },
@@ -67,38 +68,68 @@ export function Topbar() {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <div className="hidden w-full max-w-xl items-center gap-3 rounded-full border border-slate-900 bg-slate-900/70 px-3 py-2 text-sm text-slate-200 shadow-md shadow-slate-950/40 sm:flex">
+      <div className="relative hidden w-full max-w-xl items-center gap-3 rounded-full border border-slate-900 bg-slate-900/70 px-3 py-2 text-sm text-slate-200 shadow-md shadow-slate-950/40 sm:flex">
         <Search className="h-4 w-4 text-slate-500" />
         <div className="flex w-full flex-col gap-1">
           <Input
-            placeholder="Search devices, SSIDs, ports..."
+            placeholder="Quick search (devices, SSIDs, ports)"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
+            onFocus={() => setSearchFocused(true)}
+            onBlur={() => setTimeout(() => setSearchFocused(false), 120)}
             className={cn(
-              "h-7 border-0 bg-transparent px-0 text-sm text-slate-100 placeholder:text-slate-500",
+              "h-8 border-0 bg-transparent px-0 text-sm text-slate-100 placeholder:text-slate-500",
               "focus-visible:ring-0 focus-visible:ring-offset-0"
             )}
             aria-label="Global search"
           />
-          <div className="flex flex-wrap gap-2 text-[11px] text-slate-500">
-            <span className="rounded-full bg-slate-900 px-2 py-0.5">Enter to open suggestion</span>
-            <span className="rounded-full bg-slate-900 px-2 py-0.5">Cmd/Ctrl + K coming soon</span>
-          </div>
-          {suggestions.length > 0 && (
+        </div>
+        {searchFocused && suggestions.length > 0 && (
+          <div className="absolute left-0 right-0 top-full mt-2 rounded-xl border border-slate-800 bg-slate-950/95 p-3 shadow-lg shadow-slate-950/50 backdrop-blur">
+            <p className="mb-2 text-[11px] uppercase tracking-wide text-slate-500">Shortcuts</p>
             <div className="flex flex-wrap gap-2">
               {suggestions.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="rounded-full bg-slate-900 px-2 py-0.5 text-[11px] text-slate-300 hover:text-indigo-200"
+                  className="rounded-full border border-slate-800 bg-slate-900 px-2.5 py-1 text-[12px] text-slate-100 hover:text-indigo-200"
                 >
                   {item.label}
                 </Link>
               ))}
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
+
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="rounded-full text-slate-200 hover:bg-slate-900 sm:hidden"
+            aria-label="Open search"
+          >
+            <Search className="h-5 w-5" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="w-72 bg-slate-950 text-slate-100 sm:hidden">
+          <div className="px-2 py-2">
+            <Input
+              placeholder="Search..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              aria-label="Global search mobile"
+              className="h-9 bg-slate-900"
+            />
+          </div>
+          {suggestions.map((item) => (
+            <DropdownMenuItem key={item.href} asChild>
+              <Link href={item.href}>{item.label}</Link>
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       <div className="ml-auto flex items-center gap-2">
         <DropdownMenu>
