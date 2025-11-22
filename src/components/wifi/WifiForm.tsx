@@ -8,6 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { WifiBand, WifiConfig } from "@/lib/types/wifi";
+import { cn } from "@/lib/utils";
 
 interface WifiFormProps {
   config: WifiConfig;
