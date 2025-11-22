@@ -23,6 +23,7 @@ const mockProfile: SecurityProfile = {
 
 export default function SecurityPage() {
   const [profile, setProfile] = useState<SecurityProfile>(mockProfile);
+  const [autoUpdatesEnabled, setAutoUpdatesEnabled] = useState(true);
 
   const riskMessage = useMemo(() => {
     if (profile.firewallLevel >= 3) return "Strict: New services are blocked by default.";
@@ -120,7 +121,11 @@ export default function SecurityPage() {
                   Keep security signatures fresh.
                 </CardDescription>
               </div>
-              <Switch checked defaultChecked aria-label="Auto updates" />
+              <Switch
+                checked={autoUpdatesEnabled}
+                onCheckedChange={setAutoUpdatesEnabled}
+                aria-label="Auto updates"
+              />
             </CardHeader>
             <CardContent className="text-sm text-slate-300">
               Updates run nightly at 03:00. You can trigger manual update in System.

@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { Lock, Signal, Wifi } from "lucide-react";
 import {
@@ -14,14 +14,14 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 
 export function WifiStatusCard() {
-  const wifiStatus = {
+  const [wifiStatus, setWifiStatus] = useState({
     ssid: "HomeNetwork_5G",
     band: "5GHz",
     enabled: true,
     guestEnabled: false,
     connectedDevices: 8,
     signalStrength: 95,
-  };
+  });
 
   return (
     <Card className="border-slate-800 bg-slate-900/50">
@@ -38,8 +38,10 @@ export function WifiStatusCard() {
           </div>
           <Switch
             checked={wifiStatus.enabled}
-            onCheckedChange={() => {}}
-            aria-readonly
+            onCheckedChange={(enabled) =>
+              setWifiStatus((prev) => ({ ...prev, enabled }))
+            }
+            aria-label="Toggle Wi-Fi broadcast"
           />
         </div>
       </CardHeader>
@@ -87,8 +89,10 @@ export function WifiStatusCard() {
           <span className="text-slate-300">Guest Network</span>
           <Switch
             checked={wifiStatus.guestEnabled}
-            onCheckedChange={() => {}}
-            aria-readonly
+            onCheckedChange={(guestEnabled) =>
+              setWifiStatus((prev) => ({ ...prev, guestEnabled }))
+            }
+            aria-label="Toggle guest Wi-Fi"
           />
         </div>
 
