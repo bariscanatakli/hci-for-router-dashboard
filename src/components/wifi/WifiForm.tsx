@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Lock, Radio } from "lucide-react";
+import { ChevronDown, Lock, Radio } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -12,11 +12,14 @@ import { WifiBand, WifiConfig } from "@/lib/types/wifi";
 interface WifiFormProps {
   config: WifiConfig;
   onChange: (config: WifiConfig) => void;
+  disabled?: boolean;
 }
 
 const bands: WifiBand[] = ["2.4GHz", "5GHz", "6GHz"];
+const bandwidthOptions: WifiConfig["bandwidthMhz"][] = [20, 40, 80, 160];
+const modeOptions: WifiConfig["mode"][] = ["802.11n", "802.11ac", "802.11ax"];
 
-export function WifiForm({ config, onChange }: WifiFormProps) {
+export function WifiForm({ config, onChange, disabled = false }: WifiFormProps) {
   const [status, setStatus] = useState<{ message: string; tone: "success" | "warning" | "info" } | null>(null);
   const [lastSaved, setLastSaved] = useState<WifiConfig>(config);
   const updateField = <K extends keyof WifiConfig>(key: K, value: WifiConfig[K]) => {
@@ -44,7 +47,7 @@ export function WifiForm({ config, onChange }: WifiFormProps) {
   };
 
   return (
-    <Card className="border-slate-800 bg-slate-900/50">
+    <Card className={cn("border-slate-800 bg-slate-900/50", disabled && "opacity-60")}>
       <CardHeader className="flex flex-row items-start justify-between gap-3">
         <div className="space-y-1">
           <CardTitle className="flex items-center gap-2 text-base">
@@ -61,41 +64,44 @@ export function WifiForm({ config, onChange }: WifiFormProps) {
           aria-label="Broadcast SSID"
         />
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className={cn("space-y-4", disabled && "pointer-events-none")}>
         <div className="grid gap-3 md:grid-cols-2">
-      <Field label="Network Name (SSID)">
-        <Input
-          value={config.ssid}
-          onChange={(e) => updateField("ssid", e.target.value)}
-          placeholder="HomeNetwork"
-          className="bg-slate-950/70 text-sm"
-          aria-invalid={Boolean(ssidError)}
-          data-hci="wifi-ssid"
-          title="Main SSID name (2-32 chars)."
-        />
-        {ssidError && <p className="text-xs text-red-300">{ssidError}</p>}
-      </Field>
-      <Field label="Password">
-        <Input
+          <Field label="Network Name (SSID)">
+            <Input
+              value={config.ssid}
+              onChange={(e) => updateField("ssid", e.target.value)}
+              placeholder="HomeNetwork"
+              className="bg-slate-950/70 text-sm"
+              aria-invalid={Boolean(ssidError)}
+              data-hci="wifi-ssid"
+              title="Main SSID name (2-32 chars)."
+              disabled={disabled}
+            />
+            {ssidError && <p className="text-xs text-red-300">{ssidError}</p>}
+          </Field>
+          <Field label="Password">
+            <Input
           type="password"
           value={config.password}
-          onChange={(e) => updateField("password", e.target.value)}
-          placeholder="••••••••"
-          className="bg-slate-950/70 text-sm"
-          aria-invalid={Boolean(passwordError)}
-          data-hci="wifi-password"
-          title="At least 8 characters; keep guests on guest network."
-        />
-        {passwordError && <p className="text-xs text-red-300">{passwordError}</p>}
-      </Field>
+              onChange={(e) => updateField("password", e.target.value)}
+              placeholder="••••••••"
+              className="bg-slate-950/70 text-sm"
+              aria-invalid={Boolean(passwordError)}
+              data-hci="wifi-password"
+              title="At least 8 characters; keep guests on guest network."
+              disabled={disabled}
+            />
+            {passwordError && <p className="text-xs text-red-300">{passwordError}</p>}
+          </Field>
         </div>
 
         <div className="grid gap-3 md:grid-cols-3">
           <Field label="Band">
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
+              <DropdownMenuTrigger asChild disabled={disabled}>
                 <Button variant="outline" size="sm" className="w-full justify-between">
                   {config.band}
+                  <ChevronDown className="h-4 w-4 opacity-60" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="bg-slate-950 text-slate-100">
@@ -117,47 +123,61 @@ export function WifiForm({ config, onChange }: WifiFormProps) {
               onChange={(e) => updateField("channel", Number(e.target.value) || undefined)}
               placeholder="Auto"
               className="bg-slate-950/70 text-sm"
+              disabled={disabled}
             />
           </Field>
 
           <Field label="Bandwidth (MHz)">
-            <Input
-              type="number"
-              value={config.bandwidthMhz ?? ""}
-              onChange={(e) => {
-                const val = Number(e.target.value);
-                if (bandwidthAllowed.includes(val as WifiConfig["bandwidthMhz"])) {
-                  updateField("bandwidthMhz", val as WifiConfig["bandwidthMhz"]);
-                } else {
-                  updateField("bandwidthMhz", undefined);
-                }
-              }}
-              placeholder="20 / 40 / 80 / 160"
-              className="bg-slate-950/70 text-sm"
-              aria-invalid={Boolean(bandwidthError)}
-            />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild disabled={disabled}>
+                <Button variant="outline" size="sm" className="w-full justify-between">
+                  {config.bandwidthMhz ?? "Select"}
+                  <ChevronDown className="h-4 w-4 opacity-60" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="bg-slate-950 text-slate-100">
+                {bandwidthOptions.map((bw) => (
+                  <DropdownMenuItem key={bw} onClick={() => updateField("bandwidthMhz", bw)}>
+                    {bw} MHz
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
             {bandwidthError && <p className="text-xs text-red-300">{bandwidthError}</p>}
           </Field>
         </div>
 
         <div className="grid gap-3 md:grid-cols-3">
           <Field label="Mode">
-            <Input
-              value={config.mode ?? ""}
-              onChange={(e) =>
-                updateField("mode", e.target.value as WifiConfig["mode"])
-              }
-              placeholder="802.11ax"
-              className="bg-slate-950/70 text-sm"
-            />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild disabled={disabled}>
+                <Button variant="outline" size="sm" className="w-full justify-between">
+                  {config.mode ?? "Select mode"}
+                  <ChevronDown className="h-4 w-4 opacity-60" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="bg-slate-950 text-slate-100">
+                {modeOptions.map((mode) => (
+                  <DropdownMenuItem key={mode} onClick={() => updateField("mode", mode)}>
+                    {mode}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </Field>
           <Field label="Max Clients">
             <Input
               type="number"
+              min={1}
+              max={256}
               value={config.maxClients ?? ""}
-              onChange={(e) => updateField("maxClients", Number(e.target.value) || undefined)}
-              placeholder="e.g. 32"
+              onChange={(e) => {
+                const val = Number(e.target.value);
+                updateField("maxClients", val > 0 && val <= 256 ? val : undefined);
+              }}
+              placeholder="1 - 256"
               className="bg-slate-950/70 text-sm"
+              disabled={disabled}
             />
           </Field>
           <Field label="WPS">
@@ -165,6 +185,7 @@ export function WifiForm({ config, onChange }: WifiFormProps) {
               <Switch
                 checked={!!config.wpsEnabled}
                 onCheckedChange={(checked) => updateField("wpsEnabled", checked)}
+                disabled={disabled}
               />
               <span className="text-sm text-slate-200">Push-button WPS</span>
             </div>
