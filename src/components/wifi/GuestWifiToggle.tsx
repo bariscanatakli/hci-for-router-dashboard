@@ -12,6 +12,8 @@ interface GuestWifiToggleProps {
   guestSsid?: string;
   guestPassword?: string;
   onToggle: (enabled: boolean) => void;
+  onUpdateCredentials?: (ssid: string, password: string) => void;
+  onRegenerate?: () => void;
 }
 
 export function GuestWifiToggle({
@@ -19,6 +21,8 @@ export function GuestWifiToggle({
   guestSsid,
   guestPassword,
   onToggle,
+  onUpdateCredentials,
+  onRegenerate,
 }: GuestWifiToggleProps) {
   return (
     <Card className="border-slate-800 bg-slate-900/50">
@@ -41,9 +45,10 @@ export function GuestWifiToggle({
             <Input
               value={guestSsid}
               disabled={!enabled}
+              onChange={(e) => onUpdateCredentials?.(e.target.value, guestPassword ?? "")}
               placeholder="GuestNetwork"
               className="bg-slate-950/70 text-sm"
-              readOnly
+              readOnly={!onUpdateCredentials}
             />
           </div>
           <div className="space-y-1.5">
@@ -51,9 +56,10 @@ export function GuestWifiToggle({
             <Input
               value={guestPassword}
               disabled={!enabled}
+              onChange={(e) => onUpdateCredentials?.(guestSsid ?? "", e.target.value)}
               placeholder="••••••••"
               className="bg-slate-950/70 text-sm"
-              readOnly
+              readOnly={!onUpdateCredentials}
             />
           </div>
         </div>
@@ -61,7 +67,13 @@ export function GuestWifiToggle({
           <WifiOff className="h-3.5 w-3.5" />
           Guests stay isolated from main devices to reduce risk.
         </div>
-        <Button variant="outline" size="sm" className="w-full" disabled={!enabled}>
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full"
+          disabled={!enabled}
+          onClick={onRegenerate}
+        >
           Regenerate guest credentials
         </Button>
       </CardContent>

@@ -36,6 +36,14 @@ export default function WifiPage() {
   const [config, setConfig] = useState<WifiConfig>(mockConfig);
   const [status, setStatus] = useState<WifiStatus>(mockStatus);
 
+  const regenerateGuest = () => {
+    const randomSuffix = Math.floor(Math.random() * 9000 + 1000);
+    const newSsid = `Guest-${randomSuffix}`;
+    const newPassword = `guest-${randomSuffix}`;
+    setConfig((c) => ({ ...c, guestSsid: newSsid, guestPassword: newPassword, guestEnabled: true }));
+    setStatus((s) => ({ ...s, guestEnabled: true }));
+  };
+
   const signalTone = useMemo(() => {
     if (status.signalStrength >= 90) return "text-emerald-300";
     if (status.signalStrength >= 70) return "text-blue-300";
@@ -129,6 +137,10 @@ export default function WifiPage() {
               setStatus((s) => ({ ...s, guestEnabled: enabled }));
               setConfig((c) => ({ ...c, guestEnabled: enabled }));
             }}
+            onUpdateCredentials={(ssid, password) =>
+              setConfig((c) => ({ ...c, guestSsid: ssid, guestPassword: password }))
+            }
+            onRegenerate={regenerateGuest}
           />
 
           <Card className="border-slate-800 bg-slate-900/50">

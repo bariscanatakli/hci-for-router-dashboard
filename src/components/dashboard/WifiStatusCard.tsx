@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Lock, Signal, Wifi } from "lucide-react";
 import {
   Card,
@@ -14,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 
 export function WifiStatusCard() {
+  const router = useRouter();
   const [wifiStatus, setWifiStatus] = useState({
     ssid: "HomeNetwork_5G",
     band: "5GHz",
@@ -95,9 +97,13 @@ export function WifiStatusCard() {
             <Signal className="h-4 w-4 text-slate-400" />
             <span className="text-sm text-slate-300">Connected Devices</span>
           </div>
-          <span className="text-lg font-semibold text-slate-50">
+          <button
+            type="button"
+            onClick={() => router.push("/devices")}
+            className="text-lg font-semibold text-indigo-200 underline-offset-4 hover:underline"
+          >
             {effectiveDevices}
-          </span>
+          </button>
         </div>
 
         <div className="flex items-center justify-between text-sm">

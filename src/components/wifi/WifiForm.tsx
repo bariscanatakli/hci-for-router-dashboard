@@ -18,19 +18,29 @@ const bands: WifiBand[] = ["2.4GHz", "5GHz", "6GHz"];
 
 export function WifiForm({ config, onChange }: WifiFormProps) {
   const [status, setStatus] = useState<{ message: string; tone: "success" | "warning" | "info" } | null>(null);
+  const [lastSaved, setLastSaved] = useState<WifiConfig>(config);
   const updateField = <K extends keyof WifiConfig>(key: K, value: WifiConfig[K]) => {
     onChange({ ...config, [key]: value });
   };
 
   const ssidError = !config.ssid.trim() ? "Network name is required." : "";
   const passwordError = config.password.trim().length < 8 ? "Password must be at least 8 characters." : "";
+  const bandwidthAllowed = [20, 40, 80, 160];
+  const bandwidthError =
+    config.bandwidthMhz && !bandwidthAllowed.includes(config.bandwidthMhz) ? "Bandwidth must be 20/40/80/160 MHz." : "";
 
   const handleSave = () => {
-    if (ssidError || passwordError) {
-      setStatus({ message: "Please fix SSID/password before saving.", tone: "warning" });
+    if (ssidError || passwordError || bandwidthError) {
+      setStatus({ message: "Please fix highlighted fields before saving.", tone: "warning" });
       return;
     }
+    setLastSaved(config);
     setStatus({ message: "Wi-Fi settings saved (mock).", tone: "success" });
+  };
+
+  const handleCancel = () => {
+    onChange(lastSaved);
+    setStatus({ message: "Changes reverted.", tone: "info" });
   };
 
   return (
@@ -114,12 +124,19 @@ export function WifiForm({ config, onChange }: WifiFormProps) {
             <Input
               type="number"
               value={config.bandwidthMhz ?? ""}
-              onChange={(e) =>
-                updateField("bandwidthMhz", (Number(e.target.value) as WifiConfig["bandwidthMhz"]) || undefined)
-              }
+              onChange={(e) => {
+                const val = Number(e.target.value);
+                if (bandwidthAllowed.includes(val as WifiConfig["bandwidthMhz"])) {
+                  updateField("bandwidthMhz", val as WifiConfig["bandwidthMhz"]);
+                } else {
+                  updateField("bandwidthMhz", undefined);
+                }
+              }}
               placeholder="20 / 40 / 80 / 160"
               className="bg-slate-950/70 text-sm"
+              aria-invalid={Boolean(bandwidthError)}
             />
+            {bandwidthError && <p className="text-xs text-red-300">{bandwidthError}</p>}
           </Field>
         </div>
 
@@ -165,7 +182,7 @@ export function WifiForm({ config, onChange }: WifiFormProps) {
         </div>
 
         <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
-          <Button variant="ghost" size="sm" className="text-slate-200">
+          <Button variant="ghost" size="sm" className="text-slate-200" onClick={handleCancel} data-hci="wifi-cancel">
             Cancel
           </Button>
           <Button
