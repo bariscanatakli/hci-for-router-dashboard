@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Lock, Radio } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -17,13 +17,21 @@ interface WifiFormProps {
 const bands: WifiBand[] = ["2.4GHz", "5GHz", "6GHz"];
 
 export function WifiForm({ config, onChange }: WifiFormProps) {
+  const [status, setStatus] = useState<{ message: string; tone: "success" | "warning" | "info" } | null>(null);
   const updateField = <K extends keyof WifiConfig>(key: K, value: WifiConfig[K]) => {
     onChange({ ...config, [key]: value });
   };
 
   const ssidError = !config.ssid.trim() ? "Network name is required." : "";
   const passwordError = config.password.trim().length < 8 ? "Password must be at least 8 characters." : "";
-  const saveDisabled = Boolean(ssidError || passwordError);
+
+  const handleSave = () => {
+    if (ssidError || passwordError) {
+      setStatus({ message: "Please fix SSID/password before saving.", tone: "warning" });
+      return;
+    }
+    setStatus({ message: "Wi-Fi settings saved (mock).", tone: "success" });
+  };
 
   return (
     <Card className="border-slate-800 bg-slate-900/50">
@@ -163,11 +171,28 @@ export function WifiForm({ config, onChange }: WifiFormProps) {
           <Button
             size="sm"
             className="bg-indigo-500 text-white shadow-md shadow-indigo-900/30 hover:bg-indigo-600 disabled:opacity-50"
-            disabled={saveDisabled}
+            onClick={handleSave}
+            data-hci="wifi-save"
           >
             Save changes
           </Button>
         </div>
+
+        {status && (
+          <div
+            className={`rounded-md px-3 py-2 text-xs ${
+              status.tone === "success"
+                ? "border-emerald-800 bg-emerald-950/40 text-emerald-100"
+                : status.tone === "warning"
+                  ? "border-amber-800 bg-amber-950/40 text-amber-100"
+                  : "border-slate-800 bg-slate-950/60 text-slate-200"
+            }`}
+            role="status"
+            aria-live="polite"
+          >
+            {status.message}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
