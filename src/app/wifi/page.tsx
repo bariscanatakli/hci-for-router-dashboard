@@ -5,6 +5,7 @@ import { Wifi, Activity, ShieldCheck } from "lucide-react";
 import { WifiForm } from "@/components/wifi/WifiForm";
 import { GuestWifiToggle } from "@/components/wifi/GuestWifiToggle";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { WifiConfig, WifiStatus } from "@/lib/types/wifi";

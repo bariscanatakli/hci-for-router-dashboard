@@ -4,10 +4,13 @@ export interface ApiClient {
 }
 
 export const apiClient: ApiClient = {
-  async get(_path) {
+  async get(path) {
+    void path;
     return null;
   },
-  async post(_path, _body) {
+  async post(path, body) {
+    void path;
+    void body;
     return null;
   },
 };

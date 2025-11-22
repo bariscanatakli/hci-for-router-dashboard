@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo } from "react";
-import { Activity, Gauge, Wifi, Zap } from "lucide-react";
+import { Activity, Gauge, Wifi } from "lucide-react";
 import { BandwidthChart } from "@/components/performance/BandwidthChart";
 import { LatencyChart } from "@/components/performance/LatencyChart";
 import { Card, CardContent } from "@/components/ui/card";

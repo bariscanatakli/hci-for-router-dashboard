@@ -4,6 +4,7 @@ export async function fetchWifiConfig(): Promise<WifiConfig | null> {
   return null;
 }
 
-export async function updateWifiConfig(_config: WifiConfig): Promise<boolean> {
+export async function updateWifiConfig(config: WifiConfig): Promise<boolean> {
+  void config;
   return false;
 }

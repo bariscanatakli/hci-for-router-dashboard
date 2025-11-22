@@ -4,6 +4,7 @@ export async function fetchSecurityProfile(): Promise<SecurityProfile | null> {
   return null;
 }
 
-export async function updateSecurityProfile(_profile: SecurityProfile): Promise<boolean> {
+export async function updateSecurityProfile(profile: SecurityProfile): Promise<boolean> {
+  void profile;
   return false;
 }

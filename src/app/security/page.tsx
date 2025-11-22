@@ -5,7 +5,6 @@ import { Shield, Activity, ShieldCheck, ShieldOff } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { FirewallLevelSlider } from "@/components/security/FirewallLevelSlider";
 import { PortForwardWizard } from "@/components/security/PortForwardWizard";
-import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { SecurityProfile, PortForwardRule } from "@/lib/types/security";
 import { cn } from "@/lib/utils";
