@@ -47,6 +47,7 @@ Ek olarak, Codex tarafında alt-roller:
 - **REVIEWER Agent**
 - **TESTER Agent**
 - **DOCS Agent**
+- **CONTINUOUS IMPROVER** (Shneiderman/heuristic döngü)
 
 ### 1.1. PLANNER & ARCHITECT (Codex / ChatGPT)
 
@@ -138,6 +139,36 @@ Sorumluluklar:
 ## 2. Multi-Agent Pipeline
 
 Bu pipeline, Copilot ve Codex’in **birlikte, sırayla** çalışması için tasarlanmıştır.
+
+### 2.0. Shneiderman 8 altın kurala dayalı sürekli iyileştirme döngüsü (Continuous Improver)
+
+Amaç: Her iterasyonda UI/UX ve kodu Shneiderman’ın 8 kuralına göre iyileştirip PR’a hazır hale getirmek.
+
+Kural referansları (kısa):
+1) Tutarlılık
+2) Sık kullanılan işlemler için kısayol
+3) Bilgilendirici geri bildirim
+4) Diyalog kapanışı/akış sonlandırma
+5) Hata önleme ve basit hata mesajı
+6) Geri alınabilirlik (undo/iptal)
+7) Kullanıcı kontrolü (locus of control)
+8) Kısa süreli hafıza yükünü azaltma
+
+Döngü adımları:
+1. **Review (REVIEWER)**: Son değişiklikleri Shneiderman + Nielsen heuristics ile tarar; bulguları “Aktif bulgular” altına kural etiketi (S1..S8) ve öncelik ile ekler.
+2. **Plan (PLANNER)**: Bulguları “Quick fix” (≤30 dk) ve “Deep fix” (>30 dk) olarak ayırır; etki/efor notu düşer.
+3. **Implement (IMPLEMENTER)**: Önce quick, sonra deep fixes. UI değişimlerinde kural referansını kısa yorumla belirt (örn: `// S8: hafıza yükünü azalt`).
+4. **Self-test (TESTER)**: `npm run lint` + hızlı UI checklist (odak görünür mü, boş/bozuk state var mı, geri bildirim var mı).
+5. **Docs (DOCS)**: AGENTS.md “Aktif bulgular” güncelle; gerekiyorsa DESIGN_DECISIONS.md veya README.md’ye kısa not ekle.
+6. **Branch & Commit**: `git checkout -b hci-improve/<slug>`; commit mesajı `chore(hci): <slug>` veya `feat(hci): <slug>`.
+7. **PR Hazırlığı**: `git push -u origin hci-improve/<slug>`; PR açıklamasında kural referansları ve test özeti.
+8. **Loop**: PR sonrası yeniden Review aşamasına dön.
+
+Komut şablonu (manuel tetik):
+- `git checkout -b hci-improve/<slug>`
+- `npm run lint`
+- `git commit -am "chore(hci): <slug>"`
+- `git push -u origin hci-improve/<slug>`
 
 ### 2.1. Feature Pipeline (Yeni Özellik)
 
