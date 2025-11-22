@@ -107,6 +107,12 @@ Sorumluluklar:
 - Refactor ve iyileştirme önerileri
 - Naming, component ayrışması, prop tasarımı geri bildirimi
 
+Aktif bulgular (çözülecek sırada):
+
+1) Shadcn token’ları tanımsız: `bg-primary`, `text-primary-foreground`, `ring-ring` vs. `globals.css` içinde renk teması yok; buton/switch odak + renkleri bozuk. Çözüm: Tailwind 4 `@theme` ile temel renk/semantic token seti ekle.
+2) Kök rota boş: `/` yalnızca “Home” döndürüyor; sidebar’da aktif state yok. Çözüm: `/dashboard`’a redirect veya aynı içeriği render et.
+3) Switch state hatalı: Wi‑Fi kartındaki ve Security sayfasındaki Switch’ler sabit `checked` ile render ediliyor, handler yok; kullanıcı tıklasa da değişmez ve React uyarı verir. Çözüm: State’e bağla veya `disabled/readOnly` yapıp açıklama ekle.
+
 ---
 
 ### 1.4. TESTER (Codex / ChatGPT)
