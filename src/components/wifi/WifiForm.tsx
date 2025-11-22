@@ -21,6 +21,10 @@ export function WifiForm({ config, onChange }: WifiFormProps) {
     onChange({ ...config, [key]: value });
   };
 
+  const ssidError = !config.ssid.trim() ? "Network name is required." : "";
+  const passwordError = config.password.trim().length < 8 ? "Password must be at least 8 characters." : "";
+  const saveDisabled = Boolean(ssidError || passwordError);
+
   return (
     <Card className="border-slate-800 bg-slate-900/50">
       <CardHeader className="flex flex-row items-start justify-between gap-3">
@@ -47,7 +51,9 @@ export function WifiForm({ config, onChange }: WifiFormProps) {
               onChange={(e) => updateField("ssid", e.target.value)}
               placeholder="HomeNetwork"
               className="bg-slate-950/70 text-sm"
+              aria-invalid={Boolean(ssidError)}
             />
+            {ssidError && <p className="text-xs text-red-300">{ssidError}</p>}
           </Field>
           <Field label="Password">
             <Input
@@ -56,7 +62,9 @@ export function WifiForm({ config, onChange }: WifiFormProps) {
               onChange={(e) => updateField("password", e.target.value)}
               placeholder="••••••••"
               className="bg-slate-950/70 text-sm"
+              aria-invalid={Boolean(passwordError)}
             />
+            {passwordError && <p className="text-xs text-red-300">{passwordError}</p>}
           </Field>
         </div>
 
@@ -148,7 +156,11 @@ export function WifiForm({ config, onChange }: WifiFormProps) {
           <Button variant="ghost" size="sm" className="text-slate-200">
             Cancel
           </Button>
-          <Button size="sm" className="bg-indigo-500 text-white shadow-md shadow-indigo-900/30 hover:bg-indigo-600">
+          <Button
+            size="sm"
+            className="bg-indigo-500 text-white shadow-md shadow-indigo-900/30 hover:bg-indigo-600 disabled:opacity-50"
+            disabled={saveDisabled}
+          >
             Save changes
           </Button>
         </div>

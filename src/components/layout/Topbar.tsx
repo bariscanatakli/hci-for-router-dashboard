@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Activity, Bell, CheckCircle2, Info, Menu, Search, Settings, WifiOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,9 @@ const navItems = [
 export function Topbar() {
   const [query, setQuery] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
+  const [toast, setToast] = useState<{ message: string; tone?: "success" | "info" | "warning" } | null>(null);
+  const searchRef = useRef<HTMLInputElement | null>(null);
+
   const suggestions = useMemo(() => {
     const pool = [
       { label: "Go to Devices", href: "/devices" },
@@ -46,6 +49,27 @@ export function Topbar() {
     { id: "n3", icon: WifiOff, tone: "text-amber-300", title: "Throughput dip detected", time: "18m ago" },
   ];
 
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setSearchFocused(true);
+        searchRef.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
+  useEffect(() => {
+    if (!toast) return;
+    const id = setTimeout(() => setToast(null), 2500);
+    return () => clearTimeout(id);
+  }, [toast]);
+
+  const triggerToast = (message: string, tone: "success" | "info" | "warning" = "info") =>
+    setToast({ message, tone });
+
   return (
     <header className="sticky top-0 z-20 flex h-16 items-center gap-4 border-b border-slate-900 bg-slate-950/80 px-4 backdrop-blur md:px-6">
       <DropdownMenu>
@@ -59,7 +83,10 @@ export function Topbar() {
             <Menu className="h-5 w-5" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="w-44 bg-slate-950 text-slate-100">
+        <DropdownMenuContent align="start" className="w-48 bg-slate-950 text-slate-100">
+          <DropdownMenuItem asChild className="font-semibold text-indigo-200">
+            <Link href="/dashboard">Go to Dashboard</Link>
+          </DropdownMenuItem>
           {navItems.map((item) => (
             <DropdownMenuItem key={item.href} asChild>
               <Link href={item.href}>{item.label}</Link>
@@ -77,6 +104,7 @@ export function Topbar() {
             onChange={(e) => setQuery(e.target.value)}
             onFocus={() => setSearchFocused(true)}
             onBlur={() => setTimeout(() => setSearchFocused(false), 120)}
+            ref={searchRef}
             className={cn(
               "h-8 border-0 bg-transparent px-0 text-sm text-slate-100 placeholder:text-slate-500",
               "focus-visible:ring-0 focus-visible:ring-offset-0"
@@ -133,16 +161,17 @@ export function Topbar() {
 
       <div className="ml-auto flex items-center gap-2">
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9 rounded-full text-slate-200 hover:bg-slate-900"
-              aria-label="Open notifications"
-            >
-              <Bell className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9 rounded-full text-slate-200 hover:bg-slate-900"
+            onClick={() => triggerToast("Notifications loaded", "info")}
+            aria-label="Open notifications"
+          >
+            <Bell className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-72 bg-slate-950 text-slate-100">
             {notifications.map((n) => {
               const Icon = n.icon;
@@ -165,6 +194,7 @@ export function Topbar() {
               variant="ghost"
               size="sm"
               className="hidden items-center gap-2 rounded-full border border-slate-900 bg-slate-900/70 text-xs font-medium text-emerald-200 hover:bg-slate-900 lg:flex"
+              onClick={() => triggerToast("Network status refreshed", "success")}
               aria-label="Network status details"
             >
               <span className="flex h-2 w-2 items-center justify-center rounded-full bg-emerald-400" />
@@ -191,6 +221,7 @@ export function Topbar() {
           size="sm"
           className="flex items-center gap-2 rounded-full bg-indigo-500 px-3 text-xs font-semibold text-white shadow-lg shadow-indigo-900/40 hover:bg-indigo-600"
           asChild
+          onClick={() => triggerToast("Opening Live Monitor…", "info")}
         >
           <Link href="/performance">
             <Activity className="h-4 w-4" />
@@ -202,6 +233,7 @@ export function Topbar() {
           size="icon"
           className="hidden h-9 w-9 rounded-full border border-slate-900 bg-slate-900/70 text-slate-200 hover:bg-slate-900 sm:inline-flex"
           asChild
+          onClick={() => triggerToast("Opening Settings…", "info")}
           aria-label="Open settings"
         >
           <Link href="/system">
@@ -209,6 +241,23 @@ export function Topbar() {
           </Link>
         </Button>
       </div>
+
+      {toast && (
+        <div
+          className={cn(
+            "fixed right-4 top-20 z-30 rounded-lg border px-4 py-2 text-sm shadow-lg shadow-slate-950/50",
+            toast.tone === "success"
+              ? "border-emerald-700 bg-emerald-950/70 text-emerald-100"
+              : toast.tone === "warning"
+                ? "border-amber-700 bg-amber-950/70 text-amber-100"
+                : "border-indigo-700 bg-slate-950/80 text-slate-100"
+          )}
+          role="status"
+          aria-live="polite"
+        >
+          {toast.message}
+        </div>
+      )}
     </header>
   );
 }
