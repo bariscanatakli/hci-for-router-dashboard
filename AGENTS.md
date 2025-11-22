@@ -112,6 +112,13 @@ Aktif bulgular (çözülecek sırada):
 
 Şu an açık bulgu yok (son döngüde 3 madde ele alındı: Auto-updates geri bildirimi, Wi‑Fi kartı durumu, mobil nav erişimi). Yeni bulgular için Review aşamasına dön.
 
+Topbar / Navbar TODO’ları (Shneiderman odaklı):
+- [ ] Bildirim menüsü (S3 geri bildirim) — mock feed + durum ikonları
+- [ ] Arama alanı (S2 kısayol, S8 hafıza) — hızlı link/suggestion ve küçük ekran erişimi
+- [ ] “Network stable” durumu (S3 geri bildirim) — açılır detaylı bağlantı sağlığı
+- [ ] “Live Monitor” aksiyonu (S7 kontrol) — ilgili sayfaya geçiş veya modal
+- [ ] Settings ikonu (S7 kontrol) — System/Settings sayfasına bağlantı
+
 ---
 
 ### 1.4. TESTER (Codex / ChatGPT)
