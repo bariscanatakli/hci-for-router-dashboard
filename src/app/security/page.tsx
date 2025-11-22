@@ -127,8 +127,17 @@ export default function SecurityPage() {
                 aria-label="Auto updates"
               />
             </CardHeader>
-            <CardContent className="text-sm text-slate-300">
-              Updates run nightly at 03:00. You can trigger manual update in System.
+            <CardContent className="space-y-2 text-sm text-slate-300">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-slate-400">Status</span>
+                <span className={cn("font-semibold", autoUpdatesEnabled ? "text-emerald-300" : "text-amber-200")}>
+                  {autoUpdatesEnabled ? "Enabled" : "Paused"}
+                </span>
+              </div>
+              <p>Updates run nightly at 03:00. You can trigger manual update in System.</p>
+              <p className="text-xs text-slate-500">
+                This toggle is local until API wiring; persist changes via System settings when available.
+              </p>
             </CardContent>
           </Card>
         </div>

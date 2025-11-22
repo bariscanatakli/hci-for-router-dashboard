@@ -110,9 +110,7 @@ Sorumluluklar:
 
 Aktif bulgular (çözülecek sırada):
 
-1) Shadcn token’ları tanımsız: `bg-primary`, `text-primary-foreground`, `ring-ring` vs. `globals.css` içinde renk teması yok; buton/switch odak + renkleri bozuk. Çözüm: Tailwind 4 `@theme` ile temel renk/semantic token seti ekle.
-2) Kök rota boş: `/` yalnızca “Home” döndürüyor; sidebar’da aktif state yok. Çözüm: `/dashboard`’a redirect veya aynı içeriği render et.
-3) Switch state hatalı: Wi‑Fi kartındaki ve Security sayfasındaki Switch’ler sabit `checked` ile render ediliyor, handler yok; kullanıcı tıklasa da değişmez ve React uyarı verir. Çözüm: State’e bağla veya `disabled/readOnly` yapıp açıklama ekle.
+Şu an açık bulgu yok (son döngüde 3 madde ele alındı: Auto-updates geri bildirimi, Wi‑Fi kartı durumu, mobil nav erişimi). Yeni bulgular için Review aşamasına dön.
 
 ---
 

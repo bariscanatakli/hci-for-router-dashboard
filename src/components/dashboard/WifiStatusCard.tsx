@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import Link from "next/link";
 import { Lock, Signal, Wifi } from "lucide-react";
 import {
@@ -23,6 +23,15 @@ export function WifiStatusCard() {
     signalStrength: 95,
   });
 
+  const effectiveSignal = useMemo(
+    () => (wifiStatus.enabled ? wifiStatus.signalStrength : 0),
+    [wifiStatus.enabled, wifiStatus.signalStrength]
+  );
+  const effectiveDevices = useMemo(
+    () => (wifiStatus.enabled ? wifiStatus.connectedDevices : 0),
+    [wifiStatus.enabled, wifiStatus.connectedDevices]
+  );
+
   return (
     <Card className="border-slate-800 bg-slate-900/50">
       <CardHeader>
@@ -39,7 +48,13 @@ export function WifiStatusCard() {
           <Switch
             checked={wifiStatus.enabled}
             onCheckedChange={(enabled) =>
-              setWifiStatus((prev) => ({ ...prev, enabled }))
+              setWifiStatus((prev) => ({
+                ...prev,
+                enabled,
+                guestEnabled: enabled ? prev.guestEnabled : false,
+                signalStrength: enabled ? prev.signalStrength : 0,
+                connectedDevices: enabled ? prev.connectedDevices : 0,
+              }))
             }
             aria-label="Toggle Wi-Fi broadcast"
           />
@@ -64,13 +79,13 @@ export function WifiStatusCard() {
           <div className="flex items-center justify-between text-xs">
             <span className="font-medium text-slate-400">Signal Strength</span>
             <span className="font-semibold text-slate-100">
-              {wifiStatus.signalStrength}%
+              {effectiveSignal}%
             </span>
           </div>
           <div className="h-2 overflow-hidden rounded-full bg-slate-800">
             <div
               className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-500"
-              style={{ width: `${wifiStatus.signalStrength}%` }}
+              style={{ width: `${effectiveSignal}%` }}
             />
           </div>
         </div>
@@ -81,7 +96,7 @@ export function WifiStatusCard() {
             <span className="text-sm text-slate-300">Connected Devices</span>
           </div>
           <span className="text-lg font-semibold text-slate-50">
-            {wifiStatus.connectedDevices}
+            {effectiveDevices}
           </span>
         </div>
 
@@ -92,9 +107,20 @@ export function WifiStatusCard() {
             onCheckedChange={(guestEnabled) =>
               setWifiStatus((prev) => ({ ...prev, guestEnabled }))
             }
+            disabled={!wifiStatus.enabled}
             aria-label="Toggle guest Wi-Fi"
           />
         </div>
+
+        {!wifiStatus.enabled && (
+          <p className="rounded-md border border-slate-800 bg-slate-950/70 px-3 py-2 text-xs text-slate-400">
+            Wi-Fi is off in this preview. Enable it or open Wi-Fi settings to apply changes.
+          </p>
+        )}
+
+        <p className="text-xs text-slate-500">
+          Preview only — configure real settings in the Wi-Fi page.
+        </p>
 
         <Button variant="outline" size="sm" className="w-full" asChild>
           <Link href="/wifi">Configure Wi-Fi Settings</Link>

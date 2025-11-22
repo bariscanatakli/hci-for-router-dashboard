@@ -2,15 +2,51 @@
 
 "use client";
 
-import { Activity, Bell, Search, Settings } from "lucide-react";
+import Link from "next/link";
+import { Activity, Bell, Menu, Search, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+
+const navItems = [
+  { label: "Dashboard", href: "/dashboard" },
+  { label: "Devices", href: "/devices" },
+  { label: "Wi-Fi", href: "/wifi" },
+  { label: "Security", href: "/security" },
+  { label: "Performance", href: "/performance" },
+  { label: "System", href: "/system" },
+];
 
 export function Topbar() {
   return (
     <header className="sticky top-0 z-20 flex h-16 items-center gap-4 border-b border-slate-900 bg-slate-950/80 px-4 backdrop-blur md:px-6">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="rounded-full text-slate-200 hover:bg-slate-900 sm:hidden"
+            aria-label="Open navigation menu"
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="w-44 bg-slate-950 text-slate-100">
+          {navItems.map((item) => (
+            <DropdownMenuItem key={item.href} asChild>
+              <Link href={item.href}>{item.label}</Link>
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+
       <div className="hidden w-full max-w-xl items-center gap-3 rounded-full border border-slate-900 bg-slate-900/70 px-3 py-2 text-sm text-slate-200 shadow-md shadow-slate-950/40 sm:flex">
         <Search className="h-4 w-4 text-slate-500" />
         <Input
