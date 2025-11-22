@@ -119,6 +119,16 @@ Topbar / Navbar TODO’ları (Shneiderman odaklı):
 - [ ] “Live Monitor” aksiyonu (S7 kontrol) — ilgili sayfaya geçiş veya modal
 - [ ] Settings ikonu (S7 kontrol) — System/Settings sayfasına bağlantı
 
+Shneiderman 8 Altın Kural aksiyon listesi:
+- [x] S1 Tutarlılık: Mobilde hızlı nav butonu/CTA eklendi (Topbar nav menüsü içinde “Go to Dashboard”).
+- [x] S2 Kısayollar: Cmd/Ctrl+K ile arama açılıyor; odak/blur yönetimi ve kompakt öneri paneli.
+- [x] S3 Geri bildirim: Topbar aksiyonlarına toast/feedback eklendi (bildirim, network status, live monitor, settings).
+- [x] S4 Diyalog kapanışı: Device detail dialog aksiyonlarında kısa teyit mesajı gösteriliyor.
+- [x] S5 Hata önleme: Wi‑Fi formunda SSID/şifre doğrulaması ve inline hatalar; Port forward’da IP/port doğrulaması ve inline hatalar.
+- [x] S6 Geri alınabilirlik: Port forward silme için Undo eklendi.
+- [x] S7 Kullanıcı kontrolü: Settings/Live Monitor linkleri belirgin, network badge detay dropdown, mobil nav erişimi güçlendirildi.
+- [x] S8 Hafıza yükü: Arama paneli sadeleştirildi, öneriler kısa etiketlerle gösteriliyor.
+
 ---
 
 ### 1.4. TESTER (Codex / ChatGPT)

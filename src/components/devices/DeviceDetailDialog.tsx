@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -20,6 +20,14 @@ interface DeviceDetailDialogProps {
 }
 
 export function DeviceDetailDialog({ open, device, onOpenChange }: DeviceDetailDialogProps) {
+  const [message, setMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!message) return;
+    const t = setTimeout(() => setMessage(null), 2000);
+    return () => clearTimeout(t);
+  }, [message]);
+
   if (!device) return null;
 
   return (
@@ -92,13 +100,29 @@ export function DeviceDetailDialog({ open, device, onOpenChange }: DeviceDetailD
         <Separator className="bg-slate-800" />
 
         <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
-          <Button variant="ghost" className="sm:flex-1" size="sm">
+          <Button
+            variant="ghost"
+            className="sm:flex-1"
+            size="sm"
+            onClick={() => setMessage("Pause access queued (mock).")}
+          >
             Pause access
           </Button>
-          <Button variant="secondary" className="sm:flex-1" size="sm">
+          <Button
+            variant="secondary"
+            className="sm:flex-1"
+            size="sm"
+            onClick={() => setMessage("Opening device logs soon (mock).")}
+          >
             View logs
           </Button>
         </div>
+
+        {message && (
+          <p className="text-center text-xs text-slate-300" role="status" aria-live="polite">
+            {message}
+          </p>
+        )}
       </DialogContent>
     </Dialog>
   );
