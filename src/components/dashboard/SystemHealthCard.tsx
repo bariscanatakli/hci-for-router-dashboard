@@ -1,0 +1,137 @@
+"use client";
+
+import React from "react";
+import { Cpu, HardDrive, Server, Thermometer } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { cn } from "@/lib/utils";
+
+export function SystemHealthCard() {
+  const systemHealth = {
+    overall: "good" as const,
+    firmwareVersion: "v2.4.1",
+    uptime: "12d 4h",
+    metrics: [
+      { label: "CPU Usage", value: 32, unit: "%", icon: Cpu, color: "blue" },
+      {
+        label: "Memory",
+        value: 58,
+        unit: "%",
+        icon: HardDrive,
+        color: "purple",
+      },
+      {
+        label: "Temperature",
+        value: 45,
+        unit: "°C",
+        icon: Thermometer,
+        color: "emerald",
+      },
+    ],
+  };
+
+  const getHealthColor = (health: string) => {
+    switch (health) {
+      case "good":
+        return "text-emerald-400 bg-emerald-500/10";
+      case "warning":
+        return "text-yellow-400 bg-yellow-500/10";
+      case "critical":
+        return "text-red-400 bg-red-500/10";
+      default:
+        return "text-slate-400 bg-slate-500/10";
+    }
+  };
+
+  const getMetricColor = (color: string) => {
+    switch (color) {
+      case "blue":
+        return "from-blue-500 to-blue-600";
+      case "purple":
+        return "from-purple-500 to-purple-600";
+      case "emerald":
+        return "from-emerald-500 to-emerald-600";
+      default:
+        return "from-slate-500 to-slate-600";
+    }
+  };
+
+  return (
+    <Card className="border-slate-800 bg-slate-900/50">
+      <CardHeader>
+        <div className="flex items-start justify-between">
+          <div className="space-y-1">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Server className="h-4 w-4 text-indigo-400" />
+              System Health
+            </CardTitle>
+            <CardDescription className="text-xs">
+              Router performance metrics
+            </CardDescription>
+          </div>
+          <div
+            className={cn(
+              "rounded-full px-2.5 py-1 text-xs font-medium capitalize",
+              getHealthColor(systemHealth.overall)
+            )}
+          >
+            {systemHealth.overall}
+          </div>
+        </div>
+      </CardHeader>
+
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-2 gap-3 rounded-lg border border-slate-800 bg-slate-950/50 p-3">
+          <div className="space-y-1">
+            <div className="text-xs text-slate-400">Firmware</div>
+            <div className="font-mono text-sm font-medium text-slate-100">
+              {systemHealth.firmwareVersion}
+            </div>
+          </div>
+          <div className="space-y-1">
+            <div className="text-xs text-slate-400">Uptime</div>
+            <div className="text-sm font-medium text-slate-100">
+              {systemHealth.uptime}
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          {systemHealth.metrics.map((metric) => {
+            const Icon = metric.icon;
+            return (
+              <div key={metric.label} className="space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2">
+                    <Icon className="h-3.5 w-3.5 text-slate-400" />
+                    <span className="font-medium text-slate-400">
+                      {metric.label}
+                    </span>
+                  </div>
+                  <span className="font-semibold text-slate-100">
+                    {metric.value}
+                    {metric.unit}
+                  </span>
+                </div>
+                <div className="h-1.5 overflow-hidden rounded-full bg-slate-800">
+                  <div
+                    className={cn(
+                      "h-full rounded-full bg-gradient-to-r",
+                      getMetricColor(metric.color)
+                    )}
+                    style={{ width: `${metric.value}%` }}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
