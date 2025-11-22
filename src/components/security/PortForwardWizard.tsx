@@ -6,6 +6,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { PortForwardRule } from "@/lib/types/security";
 
 interface PortForwardWizardProps {
@@ -25,6 +33,7 @@ export function PortForwardWizard({ rules, onChange }: PortForwardWizardProps) {
   });
   const [feedback, setFeedback] = useState<{ message: string; tone?: "success" | "warning" } | null>(null);
   const [lastRemoved, setLastRemoved] = useState<PortForwardRule | null>(null);
+  const [confirmRule, setConfirmRule] = useState<PortForwardRule | null>(null);
 
   const draftErrors = useMemo(() => {
     const errors: string[] = [];
@@ -167,7 +176,7 @@ export function PortForwardWizard({ rules, onChange }: PortForwardWizardProps) {
                 variant="ghost"
                 size="sm"
                 className="gap-2 text-red-300 hover:bg-red-500/10"
-                onClick={() => removeRule(rule.id)}
+                onClick={() => setConfirmRule(rule)}
               >
                 <Trash2 className="h-4 w-4" />
                 Remove
@@ -194,6 +203,36 @@ export function PortForwardWizard({ rules, onChange }: PortForwardWizardProps) {
             </div>
           )}
         </div>
+
+        <Dialog open={Boolean(confirmRule)} onOpenChange={(open) => !open && setConfirmRule(null)}>
+          <DialogContent className="bg-slate-950 text-slate-100">
+            <DialogHeader>
+              <DialogTitle>Remove port forward?</DialogTitle>
+              <DialogDescription>
+                This will stop external access to the target service. You can undo right after removal.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="rounded-md border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm">
+              {confirmRule?.name} — {confirmRule?.protocol.toUpperCase()} • Port {confirmRule?.port} →{" "}
+              {confirmRule?.targetIp}
+            </div>
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button variant="ghost" size="sm" onClick={() => setConfirmRule(null)}>
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => {
+                  if (confirmRule) removeRule(confirmRule.id);
+                  setConfirmRule(null);
+                }}
+              >
+                Remove
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </CardContent>
     </Card>
   );

@@ -45,27 +45,31 @@ export function WifiForm({ config, onChange }: WifiFormProps) {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid gap-3 md:grid-cols-2">
-          <Field label="Network Name (SSID)">
-            <Input
-              value={config.ssid}
-              onChange={(e) => updateField("ssid", e.target.value)}
-              placeholder="HomeNetwork"
-              className="bg-slate-950/70 text-sm"
-              aria-invalid={Boolean(ssidError)}
-            />
-            {ssidError && <p className="text-xs text-red-300">{ssidError}</p>}
-          </Field>
-          <Field label="Password">
-            <Input
-              type="password"
-              value={config.password}
-              onChange={(e) => updateField("password", e.target.value)}
-              placeholder="••••••••"
-              className="bg-slate-950/70 text-sm"
-              aria-invalid={Boolean(passwordError)}
-            />
-            {passwordError && <p className="text-xs text-red-300">{passwordError}</p>}
-          </Field>
+      <Field label="Network Name (SSID)">
+        <Input
+          value={config.ssid}
+          onChange={(e) => updateField("ssid", e.target.value)}
+          placeholder="HomeNetwork"
+          className="bg-slate-950/70 text-sm"
+          aria-invalid={Boolean(ssidError)}
+          data-hci="wifi-ssid"
+          title="Main SSID name (2-32 chars)."
+        />
+        {ssidError && <p className="text-xs text-red-300">{ssidError}</p>}
+      </Field>
+      <Field label="Password">
+        <Input
+          type="password"
+          value={config.password}
+          onChange={(e) => updateField("password", e.target.value)}
+          placeholder="••••••••"
+          className="bg-slate-950/70 text-sm"
+          aria-invalid={Boolean(passwordError)}
+          data-hci="wifi-password"
+          title="At least 8 characters; keep guests on guest network."
+        />
+        {passwordError && <p className="text-xs text-red-300">{passwordError}</p>}
+      </Field>
         </div>
 
         <div className="grid gap-3 md:grid-cols-3">

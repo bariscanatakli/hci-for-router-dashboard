@@ -129,6 +129,10 @@ Shneiderman 8 Altın Kural aksiyon listesi:
 - [x] S7 Kullanıcı kontrolü: Settings/Live Monitor linkleri belirgin, network badge detay dropdown, mobil nav erişimi güçlendirildi.
 - [x] S8 Hafıza yükü: Arama paneli sadeleştirildi, öneriler kısa etiketlerle gösteriliyor.
 
+Yeni TODO’lar:
+- [ ] Destructive aksiyonlarda onay modalı (ör. port forward silme, reboot vb.) + başarı/hata geri bildirimi.
+- [ ] UI bileşenlerine “i” hover yardım rozetleri ekle; tooltip içinde ne yaptığı ve `data-hci` etiketiyle hangi HCI öğesi olduğu belirtilecek.
+
 ---
 
 ### 1.4. TESTER (Codex / ChatGPT)

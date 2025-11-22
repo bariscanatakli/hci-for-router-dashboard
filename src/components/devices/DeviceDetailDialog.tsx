@@ -105,6 +105,8 @@ export function DeviceDetailDialog({ open, device, onOpenChange }: DeviceDetailD
             className="sm:flex-1"
             size="sm"
             onClick={() => setMessage("Pause access queued (mock).")}
+            title="Pause traffic for this device (mock action)"
+            data-hci="device-pause"
           >
             Pause access
           </Button>
@@ -113,6 +115,8 @@ export function DeviceDetailDialog({ open, device, onOpenChange }: DeviceDetailD
             className="sm:flex-1"
             size="sm"
             onClick={() => setMessage("Opening device logs soon (mock).")}
+            title="Inspect device logs (mock action)"
+            data-hci="device-logs"
           >
             View logs
           </Button>

@@ -95,7 +95,10 @@ export function Topbar() {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <div className="relative hidden w-full max-w-xl items-center gap-3 rounded-full border border-slate-900 bg-slate-900/70 px-3 py-2 text-sm text-slate-200 shadow-md shadow-slate-950/40 sm:flex">
+      <div
+        className="relative hidden w-full max-w-xl items-center gap-3 rounded-full border border-slate-900 bg-slate-900/70 px-3 py-2 text-sm text-slate-200 shadow-md shadow-slate-950/40 sm:flex"
+        data-hci="topbar-search"
+      >
         <Search className="h-4 w-4 text-slate-500" />
         <div className="flex w-full flex-col gap-1">
           <Input
@@ -111,6 +114,13 @@ export function Topbar() {
             )}
             aria-label="Global search"
           />
+        </div>
+        <div
+          className="ml-auto flex items-center gap-1 text-[11px] text-slate-500"
+          title="Search across devices, SSIDs, ports. Cmd/Ctrl+K to focus."
+        >
+          <Info className="h-3.5 w-3.5 text-slate-400" aria-hidden />
+          <span>What’s this?</span>
         </div>
         {searchFocused && suggestions.length > 0 && (
           <div className="absolute left-0 right-0 top-full mt-2 rounded-xl border border-slate-800 bg-slate-950/95 p-3 shadow-lg shadow-slate-950/50 backdrop-blur">
@@ -141,7 +151,7 @@ export function Topbar() {
             <Search className="h-5 w-5" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="w-72 bg-slate-950 text-slate-100 sm:hidden">
+        <DropdownMenuContent align="start" className="w-72 bg-slate-950 text-slate-100 sm:hidden" data-hci="mobile-search">
           <div className="px-2 py-2">
             <Input
               placeholder="Search..."
@@ -168,6 +178,7 @@ export function Topbar() {
             className="h-9 w-9 rounded-full text-slate-200 hover:bg-slate-900"
             onClick={() => triggerToast("Notifications loaded", "info")}
             aria-label="Open notifications"
+            data-hci="notif-button"
           >
             <Bell className="h-4 w-4" />
           </Button>
@@ -191,16 +202,17 @@ export function Topbar() {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
-              variant="ghost"
-              size="sm"
-              className="hidden items-center gap-2 rounded-full border border-slate-900 bg-slate-900/70 text-xs font-medium text-emerald-200 hover:bg-slate-900 lg:flex"
-              onClick={() => triggerToast("Network status refreshed", "success")}
-              aria-label="Network status details"
-            >
-              <span className="flex h-2 w-2 items-center justify-center rounded-full bg-emerald-400" />
-              Network stable
-            </Button>
-          </DropdownMenuTrigger>
+            variant="ghost"
+            size="sm"
+            className="hidden items-center gap-2 rounded-full border border-slate-900 bg-slate-900/70 text-xs font-medium text-emerald-200 hover:bg-slate-900 lg:flex"
+            onClick={() => triggerToast("Network status refreshed", "success")}
+            aria-label="Network status details"
+            data-hci="network-status"
+          >
+            <span className="flex h-2 w-2 items-center justify-center rounded-full bg-emerald-400" />
+            Network stable
+          </Button>
+        </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-64 bg-slate-950 text-slate-100">
             <DropdownMenuItem className="flex justify-between text-sm">
               <span>Latency</span>
@@ -222,6 +234,7 @@ export function Topbar() {
           className="flex items-center gap-2 rounded-full bg-indigo-500 px-3 text-xs font-semibold text-white shadow-lg shadow-indigo-900/40 hover:bg-indigo-600"
           asChild
           onClick={() => triggerToast("Opening Live Monitor…", "info")}
+          data-hci="live-monitor"
         >
           <Link href="/performance">
             <Activity className="h-4 w-4" />
@@ -235,6 +248,7 @@ export function Topbar() {
           asChild
           onClick={() => triggerToast("Opening Settings…", "info")}
           aria-label="Open settings"
+          data-hci="settings-button"
         >
           <Link href="/system">
             <Settings className="h-4 w-4" />
