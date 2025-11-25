@@ -12,10 +12,33 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export function BandwidthMiniChart() {
+  const [hoveredIndex, setHoveredIndex] = React.useState<number | null>(null);
+  const [hoveredValue, setHoveredValue] = React.useState<number | null>(null);
+  const [hoveredTime, setHoveredTime] = React.useState<string | null>(null);
+  const [baseTime, setBaseTime] = React.useState<number | null>(null);
+
   const chartData = {
     download: [65, 72, 68, 85, 91, 78, 95, 88, 92, 87, 94, 90],
     upload: [12, 15, 14, 18, 22, 19, 24, 21, 23, 20, 25, 22],
   };
+
+  // Attach explicit timestamps (5-minute spacing) so axes/tooltips reflect real sample moments
+  const intervalMs = 5 * 60 * 1000;
+  React.useEffect(() => {
+    // Seed once on client to avoid SSR/client mismatch
+    setBaseTime(Date.now() - intervalMs * (chartData.download.length - 1));
+  }, [intervalMs, chartData.download.length]);
+
+  const toSeries = (values: number[]) =>
+    baseTime === null
+      ? []
+      : values.map((value, idx) => ({
+          value,
+          timestamp: baseTime + idx * intervalMs,
+        }));
+
+  const downloadSeries = toSeries(chartData.download);
+  const uploadSeries = toSeries(chartData.upload);
 
   const stats = {
     downloadPeak: 95.2,
@@ -24,27 +47,92 @@ export function BandwidthMiniChart() {
     uploadAvg: 19.6,
   };
 
-  const renderMiniChart = (data: number[], color: string) => {
-    const max = Math.max(...data);
-    const min = Math.min(...data);
+  const formatTime = (timestamp: number) =>
+    new Intl.DateTimeFormat("en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }).format(new Date(timestamp));
+
+  const renderMiniChart = (
+    series: { value: number; timestamp: number }[],
+    color: string,
+    label: string
+  ) => {
+    if (series.length === 0) {
+      return (
+        <div className="relative">
+          <div className="flex h-16 items-center justify-center rounded-lg border border-dashed border-slate-800 bg-slate-950/50 text-[11px] text-slate-500">
+            Loading chart...
+          </div>
+          <div className="flex justify-between mt-1 text-[10px] text-slate-500">
+            <span>--:--</span>
+            <span>--:--</span>
+          </div>
+        </div>
+      );
+    }
+
+    const max = Math.max(...series.map((s) => s.value));
+    const min = Math.min(...series.map((s) => s.value));
     const range = max - min || 1;
+    const firstTime = formatTime(series[0]?.timestamp ?? Date.now());
+    const lastTime = formatTime(series[series.length - 1]?.timestamp ?? Date.now());
 
     return (
-      <div className="flex h-16 items-end gap-1">
-        {data.map((value, index) => {
-          const height = ((value - min) / range) * 100;
-          return (
-            <div
-              key={index}
-              className="flex-1 rounded-t"
-              style={{
-                height: `${height}%`,
-                backgroundColor: color,
-                opacity: 0.6 + (height / 100) * 0.4,
-              }}
-            />
-          );
-        })}
+      <div className="relative">
+        {/* Y-axis label */}
+        <div className="absolute -left-2 top-0 text-[10px] text-slate-500">
+          {Math.round(max)}
+        </div>
+        <div className="absolute -left-2 bottom-0 text-[10px] text-slate-500">
+          {Math.round(min)}
+        </div>
+        
+        {/* Chart bars */}
+        <div className="flex h-16 items-end gap-1 px-2">
+          {series.map((sample, index) => {
+            const height = ((sample.value - min) / range) * 100;
+            const isHovered = hoveredIndex === index;
+            return (
+              <div
+                key={index}
+                className="relative flex-1 rounded-t transition-opacity cursor-pointer"
+                style={{
+                  height: `${height}%`,
+                  backgroundColor: color,
+                  opacity: isHovered ? 1 : 0.6 + (height / 100) * 0.4,
+                }}
+                onMouseEnter={() => {
+                  setHoveredIndex(index);
+                  setHoveredValue(sample.value);
+                  setHoveredTime(formatTime(sample.timestamp));
+                }}
+                onMouseLeave={() => {
+                  setHoveredIndex(null);
+                  setHoveredValue(null);
+                  setHoveredTime(null);
+                }}
+                role="img"
+                aria-label={`${label} at ${formatTime(sample.timestamp)}: ${sample.value} Mbps`}
+                title={`${formatTime(sample.timestamp)} · ${sample.value} Mbps`}
+              />
+            );
+          })}
+        </div>
+        
+        {/* X-axis hint */}
+        <div className="flex justify-between mt-1 text-[10px] text-slate-500">
+          <span>{firstTime}</span>
+          <span>{lastTime}</span>
+        </div>
+        
+        {/* Tooltip */}
+        {hoveredValue !== null && (
+          <div className="absolute -top-8 left-1/2 -translate-x-1/2 rounded bg-slate-950 border border-slate-700 px-2 py-1 text-xs text-slate-100 shadow-lg">
+            {hoveredValue} Mbps{hoveredTime ? ` · ${hoveredTime}` : ""}
+          </div>
+        )}
       </div>
     );
   };
@@ -78,7 +166,7 @@ export function BandwidthMiniChart() {
 
           <TabsContent value="download" className="space-y-4">
             <div className="rounded-lg border border-slate-800 bg-slate-950/50 p-4">
-              {renderMiniChart(chartData.download, "#3b82f6")}
+              {renderMiniChart(downloadSeries, "#3b82f6", "Download")}
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
@@ -98,7 +186,7 @@ export function BandwidthMiniChart() {
 
           <TabsContent value="upload" className="space-y-4">
             <div className="rounded-lg border border-slate-800 bg-slate-950/50 p-4">
-              {renderMiniChart(chartData.upload, "#a855f7")}
+              {renderMiniChart(uploadSeries, "#a855f7", "Upload")}
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">

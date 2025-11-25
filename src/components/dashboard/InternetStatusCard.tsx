@@ -20,6 +20,7 @@ export function InternetStatusCard() {
     uptime: "12d 4h 23m",
     downloadSpeed: 847.2,
     uploadSpeed: 94.5,
+    incident: false,
   };
 
   return (
@@ -34,6 +35,7 @@ export function InternetStatusCard() {
             <CardDescription className="text-xs">
               WAN connection details
             </CardDescription>
+            <p className="text-[11px] text-slate-500">Preview data — wire telemetry for live status.</p>
           </div>
           <div
             className={cn(
@@ -68,6 +70,11 @@ export function InternetStatusCard() {
             <Activity className="h-3.5 w-3.5 text-slate-500" />
             <span className="text-sm text-slate-100">{status.uptime}</span>
           </div>
+          {status.incident && (
+            <p className="text-xs text-amber-200">
+              Connection degraded. <a href="/performance" className="underline underline-offset-2">Open performance</a>
+            </p>
+          )}
         </div>
 
         <div className="grid grid-cols-2 gap-3 rounded-lg border border-slate-800 bg-slate-950/50 p-3">

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { Activity, Gauge, Wifi } from "lucide-react";
 import { BandwidthChart } from "@/components/performance/BandwidthChart";
 import { LatencyChart } from "@/components/performance/LatencyChart";
@@ -24,10 +24,13 @@ const mockSamples: PerformanceSample[] = [
 ];
 
 export default function PerformancePage() {
+  const [samples] = useState<PerformanceSample[]>(mockSamples);
+  const [timeRange] = useState("Last 15 minutes");
+
   const kpis = useMemo(() => {
-    const downloads = mockSamples.map((s) => s.downloadMbps);
-    const uploads = mockSamples.map((s) => s.uploadMbps);
-    const latency = mockSamples.map((s) => s.latencyMs);
+    const downloads = samples.map((s) => s.downloadMbps);
+    const uploads = samples.map((s) => s.uploadMbps);
+    const latency = samples.map((s) => s.latencyMs);
     const avg = (arr: number[]) => (arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0);
     const peak = (arr: number[]) => (arr.length ? Math.max(...arr) : 0);
     return {
@@ -37,7 +40,7 @@ export default function PerformancePage() {
       peakDownload: peak(downloads),
       peakUpload: peak(uploads),
     };
-  }, []);
+  }, [samples]);
 
   return (
     <div className="space-y-8">
@@ -64,8 +67,8 @@ export default function PerformancePage() {
 
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-4">
-          <BandwidthChart samples={mockSamples} />
-          <LatencyChart samples={mockSamples} targetMs={30} />
+          <BandwidthChart samples={samples} timeRangeLabel={timeRange} />
+          <LatencyChart samples={samples} targetMs={30} timeRangeLabel={timeRange} />
         </div>
         <div className="space-y-4">
           <InsightCard

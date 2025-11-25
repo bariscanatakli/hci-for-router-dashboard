@@ -1,9 +1,10 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Wifi, Cable, MoreHorizontal, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { NetworkDevice } from "@/lib/types/devices";
 
@@ -13,12 +14,43 @@ interface DeviceRowProps {
 }
 
 export function DeviceRow({ device, onInspect }: DeviceRowProps) {
+  const [confirmAction, setConfirmAction] = useState<"pause" | "block" | null>(null);
+  const [feedback, setFeedback] = useState<string | null>(null);
+  const [lastAction, setLastAction] = useState<"pause" | "block" | null>(null);
   const connectionIcon =
     device.connectionType === "wifi" ? (
       <Wifi className="h-4 w-4 text-indigo-400" />
     ) : (
       <Cable className="h-4 w-4 text-emerald-400" />
     );
+
+  useEffect(() => {
+    if (!feedback) return;
+    // Keep undoable actions visible until resolved; only auto-clear informational toasts
+    if (lastAction) return;
+    const t = setTimeout(() => setFeedback(null), 6000);
+    return () => clearTimeout(t);
+  }, [feedback, lastAction]);
+
+  const confirmLabel =
+    confirmAction === "pause"
+      ? "Pause access for this device?"
+      : confirmAction === "block"
+        ? "Block this device?"
+        : "";
+
+  const handleConfirm = () => {
+    if (!confirmAction) return;
+    setLastAction(confirmAction);
+    setFeedback(confirmAction === "pause" ? "Access paused (mock)." : "Device blocked (mock). Undo available.");
+    setConfirmAction(null);
+  };
+
+  const handleUndo = () => {
+    if (!lastAction) return;
+    setFeedback("Action undone (mock).");
+    setLastAction(null);
+  };
 
   return (
     <tr className="border-b border-slate-800/80 text-sm text-slate-100">
@@ -83,13 +115,51 @@ export function DeviceRow({ device, onInspect }: DeviceRowProps) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="bg-slate-950 text-slate-100">
-              <DropdownMenuItem className="text-sm">Pause access</DropdownMenuItem>
-              <DropdownMenuItem className="text-sm">Set priority</DropdownMenuItem>
-              <DropdownMenuItem className="text-sm">Block device</DropdownMenuItem>
+              <DropdownMenuItem className="text-sm" onClick={() => setConfirmAction("pause")}>
+                Pause access
+              </DropdownMenuItem>
+              <DropdownMenuItem className="text-sm" onClick={() => setFeedback("Priority set to High (mock).")}>
+                Set priority
+              </DropdownMenuItem>
+              <DropdownMenuItem className="text-sm" onClick={() => setConfirmAction("block")}>
+                Block device
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
+        {feedback && (
+          <p className="mt-1 text-right text-[11px] text-slate-400" role="status" aria-live="polite">
+            {feedback}{" "}
+            {lastAction && (
+              <button className="underline underline-offset-2 text-indigo-200" onClick={handleUndo}>
+                Undo
+              </button>
+            )}
+          </p>
+        )}
       </td>
+
+      <Dialog open={!!confirmAction} onOpenChange={(open) => !open && setConfirmAction(null)}>
+        <DialogContent className="bg-slate-950 text-slate-100">
+          <DialogHeader>
+            <DialogTitle>{confirmLabel}</DialogTitle>
+            <DialogDescription className="text-sm">
+              This may interrupt the device. You can undo immediately after applying.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="rounded-md border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm text-slate-200">
+            {device.name} — {device.ipAddress}
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="ghost" size="sm" onClick={() => setConfirmAction(null)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" size="sm" onClick={handleConfirm}>
+              Confirm
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </tr>
   );
 }

@@ -70,6 +70,7 @@ export default function DevicesPage() {
   const [selectedDevice, setSelectedDevice] = useState<NetworkDevice | null>(null);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [feedback, setFeedback] = useState<string | null>(null);
 
   const filteredDevices = useMemo(() => {
     return mockDevices.filter((device) => {
@@ -88,6 +89,11 @@ export default function DevicesPage() {
   const totalCount = mockDevices.length;
   const offlineCount = totalCount - onlineCount;
 
+  const triggerFeedback = (message: string) => {
+    setFeedback(message);
+    setTimeout(() => setFeedback(null), 1800);
+  };
+
   return (
     <div className="space-y-8">
       <header className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -104,7 +110,8 @@ export default function DevicesPage() {
             variant="ghost"
             size="sm"
             className="gap-2 border border-slate-800 bg-slate-900/60 text-xs text-slate-100"
-          >
+            onClick={() => triggerFeedback("Device list refreshed (mock).")}
+            >
             <RefreshCw className="h-4 w-4" />
             Refresh
           </Button>
@@ -112,12 +119,17 @@ export default function DevicesPage() {
             variant="secondary"
             size="sm"
             className="gap-2 bg-indigo-500 text-white shadow-md shadow-indigo-900/30 hover:bg-indigo-600"
+            onClick={() => triggerFeedback("Add device flow coming soon.")}
           >
             <Plus className="h-4 w-4" />
             Add device
           </Button>
         </div>
       </header>
+
+      <div className="rounded-md border border-amber-800/40 bg-amber-950/20 px-3 py-2 text-xs text-amber-100">
+        Preview data only. Device list and actions are simulated until API wiring is enabled.
+      </div>
 
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard label="Total devices" value={totalCount} />
@@ -161,6 +173,7 @@ export default function DevicesPage() {
               variant="ghost"
               size="sm"
               className="gap-1 text-xs text-slate-200 hover:bg-slate-900"
+              onClick={() => triggerFeedback("More filters coming soon.")}
             >
               <SlidersHorizontal className="h-4 w-4" />
               More filters
@@ -182,6 +195,15 @@ export default function DevicesPage() {
           if (!open) setSelectedDevice(null);
         }}
       />
+      {feedback && (
+        <div
+          className="fixed bottom-6 right-6 z-30 rounded-md border border-slate-800 bg-slate-950/80 px-3 py-2 text-xs text-slate-100 shadow-lg shadow-slate-950/50"
+          role="status"
+          aria-live="polite"
+        >
+          {feedback}
+        </div>
+      )}
     </div>
   );
 }

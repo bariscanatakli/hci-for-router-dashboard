@@ -1,34 +1,185 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Shield, Activity, ShieldCheck, ShieldOff } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { FirewallLevelSlider } from "@/components/security/FirewallLevelSlider";
 import { PortForwardWizard } from "@/components/security/PortForwardWizard";
 import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
 import { SecurityProfile, PortForwardRule } from "@/lib/types/security";
 import { cn } from "@/lib/utils";
-
-const mockProfile: SecurityProfile = {
-  firewallLevel: 2,
-  intrusionPreventionEnabled: true,
-  threatBlocks24h: 12,
-  lastScan: "2h ago",
-  portForwards: [
-    { id: "1", name: "Home NAS", port: 445, targetIp: "192.168.1.50", protocol: "tcp" },
-    { id: "2", name: "Game Server", port: 25565, targetIp: "192.168.1.60", protocol: "udp" },
-  ],
-};
+import { setAutoUpdateEnabled, useSettingsState } from "@/store/settingsStore";
+import { fetchSecurityProfile, updateSecurityProfile } from "@/lib/api/security";
 
 export default function SecurityPage() {
-  const [profile, setProfile] = useState<SecurityProfile>(mockProfile);
-  const [autoUpdatesEnabled, setAutoUpdatesEnabled] = useState(true);
+  const [profile, setProfile] = useState<SecurityProfile | null>(null);
+  const [savedProfile, setSavedProfile] = useState<SecurityProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { autoUpdateEnabled } = useSettingsState();
+  const [feedback, setFeedback] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const savedProfileRef = useRef<SecurityProfile | null>(null);
+  const [lastAttempt, setLastAttempt] = useState<number | null>(null);
+  const [retryIn, setRetryIn] = useState<number | null>(null);
+
+  // Fetch security profile on mount
+  const loadProfile = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    setRetryIn(null);
+    setLastAttempt(Date.now());
+    try {
+      const data = await fetchSecurityProfile();
+      if (data) {
+        setProfile(data);
+        setSavedProfile(data);
+        savedProfileRef.current = data;
+      } else {
+        setError("Couldn't load security settings. Check connection and retry.");
+        if (savedProfileRef.current) setProfile(savedProfileRef.current);
+      }
+    } catch (err) {
+      console.error("[Security] Failed to load", err);
+      setError("Couldn't load security settings. Check connection and retry.");
+      if (savedProfileRef.current) setProfile(savedProfileRef.current);
+      setRetryIn(15);
+    }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    loadProfile();
+  }, [loadProfile]);
+
+  useEffect(() => {
+    if (retryIn === null) return;
+    if (retryIn <= 0) {
+      loadProfile();
+      return;
+    }
+    const t = setTimeout(() => setRetryIn((r) => (r === null ? null : r - 1)), 1000);
+    return () => clearTimeout(t);
+  }, [retryIn, loadProfile]);
+
+  const hasChanges = useMemo(() => {
+    if (!profile || !savedProfile) return false;
+    return JSON.stringify(profile) !== JSON.stringify(savedProfile);
+  }, [profile, savedProfile]);
 
   const riskMessage = useMemo(() => {
+    if (!profile) return "";
     if (profile.firewallLevel >= 3) return "Strict: New services are blocked by default.";
     if (profile.firewallLevel === 2) return "Balanced: Most services allowed, risky ports blocked.";
     return "Relaxed: Only basic protections enabled. Consider raising level.";
-  }, [profile.firewallLevel]);
+  }, [profile]);
+
+  const handleSave = async () => {
+    if (!profile) return;
+    setSaving(true);
+    setSaveError(null);
+    setFeedback("Saving security settings...");
+    const success = await updateSecurityProfile(profile);
+    setSaving(false);
+    if (success) {
+      setSavedProfile(profile);
+      setFeedback("Security settings saved successfully.");
+      setTimeout(() => setFeedback(null), 2200);
+    } else {
+      setSaveError("Failed to save security settings. Retry.");
+      setFeedback(null);
+    }
+  };
+
+  const handleDiscard = () => {
+    if (!savedProfile) return;
+    setProfile(savedProfile);
+    setFeedback("Changes discarded.");
+    setTimeout(() => setFeedback(null), 2000);
+    setSaveError(null);
+  };
+
+  if (loading) {
+    return (
+      <div className="space-y-8">
+        <header className="flex flex-col gap-2">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-500 text-white shadow-lg shadow-indigo-900/40">
+              <Shield className="h-5 w-5" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight text-slate-50">Security</h1>
+              <p className="text-sm text-slate-400">Loading security settings...</p>
+            </div>
+          </div>
+        </header>
+        {error && (
+          <Card className="border-amber-800/60 bg-amber-950/40">
+            <CardContent className="space-y-3 p-4 text-sm text-amber-100">
+              <p>{error}</p>
+              <p className="text-xs text-amber-200">
+                Last attempt: {lastAttempt ? new Date(lastAttempt).toLocaleTimeString() : "—"}
+              </p>
+              {retryIn !== null && retryIn > 0 && (
+                <p className="text-xs text-amber-200">Auto-retrying in {retryIn}s…</p>
+              )}
+              <div className="flex flex-wrap gap-2">
+                <Button size="sm" className="bg-indigo-500 text-white hover:bg-indigo-600" onClick={loadProfile} disabled={loading}>
+                  Retry now
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="space-y-8">
+        <header className="flex flex-col gap-2">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-500 text-white shadow-lg shadow-indigo-900/40">
+              <Shield className="h-5 w-5" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight text-slate-50">Security</h1>
+              <p className="text-sm text-slate-400">We couldnt load settings. Retry or use cached data.</p>
+            </div>
+          </div>
+        </header>
+        <Card className="border-amber-800/60 bg-amber-950/40">
+          <CardContent className="flex flex-col gap-3 p-4 text-sm text-amber-100">
+            <p>{error ?? "Unknown error."}</p>
+            <p className="text-xs text-amber-200">
+              Last attempt: {lastAttempt ? new Date(lastAttempt).toLocaleTimeString() : "—"}
+            </p>
+            {retryIn !== null && retryIn > 0 && (
+              <p className="text-xs text-amber-200">Auto-retrying in {retryIn}s…</p>
+            )}
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" className="bg-indigo-500 text-white hover:bg-indigo-600" onClick={loadProfile} disabled={loading}>
+                Retry loading
+              </Button>
+              {savedProfile && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-slate-800 text-slate-100 hover:bg-slate-900"
+                  onClick={() => setProfile(savedProfile)}
+                >
+                  Use last known settings
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -45,6 +196,34 @@ export default function SecurityPage() {
           </div>
         </div>
       </header>
+
+      {hasChanges && (
+        <div className="flex flex-col gap-2 rounded-md border border-indigo-800 bg-indigo-950/30 px-3 py-3 text-sm text-indigo-100 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col">
+            <span className="font-semibold">Unsaved security changes</span>
+            <span className="text-xs text-indigo-200">Save to apply or discard to revert.</span>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-indigo-100"
+              onClick={handleDiscard}
+              disabled={saving}
+            >
+              Discard
+            </Button>
+            <Button
+              size="sm"
+              className="bg-indigo-500 text-white hover:bg-indigo-600"
+              onClick={handleSave}
+              disabled={saving}
+            >
+              {saving ? "Saving..." : "Save changes"}
+            </Button>
+          </div>
+        </div>
+      )}
 
       <section className="grid gap-4 md:grid-cols-3">
         <StatusCard
@@ -71,14 +250,14 @@ export default function SecurityPage() {
         <div className="lg:col-span-2 space-y-4">
           <FirewallLevelSlider
             value={profile.firewallLevel}
-            onChange={(level) => setProfile((p) => ({ ...p, firewallLevel: level }))}
+            onChange={(level) => setProfile((p) => p ? { ...p, firewallLevel: level } : null)}
             intrusionPreventionEnabled={profile.intrusionPreventionEnabled}
-            onToggleIps={(enabled) => setProfile((p) => ({ ...p, intrusionPreventionEnabled: enabled }))}
+            onToggleIps={(enabled) => setProfile((p) => p ? { ...p, intrusionPreventionEnabled: enabled } : null)}
           />
 
           <PortForwardWizard
             rules={profile.portForwards}
-            onChange={(rules: PortForwardRule[]) => setProfile((p) => ({ ...p, portForwards: rules }))}
+            onChange={(rules: PortForwardRule[]) => setProfile((p) => p ? { ...p, portForwards: rules } : null)}
           />
         </div>
 
@@ -121,16 +300,20 @@ export default function SecurityPage() {
                 </CardDescription>
               </div>
               <Switch
-                checked={autoUpdatesEnabled}
-                onCheckedChange={setAutoUpdatesEnabled}
+                checked={autoUpdateEnabled}
+                onCheckedChange={setAutoUpdateEnabled}
                 aria-label="Auto updates"
+                onClick={() => {
+                  setFeedback(autoUpdateEnabled ? "Auto-updates paused (mock)." : "Auto-updates enabled (mock).");
+                  setTimeout(() => setFeedback(null), 2000);
+                }}
               />
             </CardHeader>
             <CardContent className="space-y-2 text-sm text-slate-300">
               <div className="flex items-center justify-between text-xs">
                 <span className="text-slate-400">Status</span>
-                <span className={cn("font-semibold", autoUpdatesEnabled ? "text-emerald-300" : "text-amber-200")}>
-                  {autoUpdatesEnabled ? "Enabled" : "Paused"}
+                <span className={cn("font-semibold", autoUpdateEnabled ? "text-emerald-300" : "text-amber-200")}>
+                  {autoUpdateEnabled ? "Enabled" : "Paused"}
                 </span>
               </div>
               <p>Updates run nightly at 03:00. You can trigger manual update in System.</p>
@@ -139,6 +322,17 @@ export default function SecurityPage() {
               </p>
             </CardContent>
           </Card>
+
+          {feedback && (
+            <div className="rounded-md border border-slate-800 bg-slate-950/70 px-3 py-2 text-xs text-slate-100" role="status" aria-live="polite">
+              {feedback}
+            </div>
+          )}
+          {saveError && (
+            <div className="rounded-md border border-amber-800 bg-amber-950/40 px-3 py-2 text-xs text-amber-100" role="alert">
+              {saveError}
+            </div>
+          )}
         </div>
       </div>
     </div>

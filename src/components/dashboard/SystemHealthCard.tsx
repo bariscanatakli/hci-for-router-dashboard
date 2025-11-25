@@ -33,6 +33,7 @@ export function SystemHealthCard() {
         color: "emerald",
       },
     ],
+    alerts: ["Check firmware update available in System"],
   };
 
   const getHealthColor = (health: string) => {
@@ -92,6 +93,7 @@ export function SystemHealthCard() {
             <div className="font-mono text-sm font-medium text-slate-100">
               {systemHealth.firmwareVersion}
             </div>
+            <p className="text-[11px] text-slate-500">Preview data — open System for live info.</p>
           </div>
           <div className="space-y-1">
             <div className="text-xs text-slate-400">Uptime</div>
@@ -131,6 +133,11 @@ export function SystemHealthCard() {
             );
           })}
         </div>
+        {systemHealth.alerts.length > 0 && (
+          <div className="rounded-md border border-amber-800/50 bg-amber-950/30 px-3 py-2 text-xs text-amber-100">
+            {systemHealth.alerts[0]} — <a href="/system" className="underline underline-offset-2">Open System</a>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

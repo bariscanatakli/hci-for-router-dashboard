@@ -7,6 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { SystemStatus } from "@/lib/types/system";
 import { cn } from "@/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface FirmwareCardProps {
   status: SystemStatus;
@@ -23,6 +31,17 @@ export function FirmwareCard({
   onToggleAutoUpdate,
   pendingVersion,
 }: FirmwareCardProps) {
+  const [confirmApply, setConfirmApply] = React.useState(false);
+  const [feedback, setFeedback] = React.useState<string | null>(null);
+  const [updateInProgress, setUpdateInProgress] = React.useState(false);
+  const [updateProgress, setUpdateProgress] = React.useState(0);
+
+  React.useEffect(() => {
+    if (!feedback || updateInProgress) return;
+    const t = setTimeout(() => setFeedback(null), 2400);
+    return () => clearTimeout(t);
+  }, [feedback, updateInProgress]);
+
   const healthTone =
     status.health === "good"
       ? "text-emerald-300 bg-emerald-500/10"
@@ -70,7 +89,11 @@ export function FirmwareCard({
               variant="ghost"
               size="sm"
               className="gap-2 text-xs text-slate-200 hover:bg-slate-900"
-              onClick={onCheckUpdate}
+              onClick={() => {
+                onCheckUpdate?.();
+                setFeedback("Checking for updates...");
+              }}
+              disabled={updateInProgress}
             >
               <RefreshCw className="h-4 w-4" />
               Check updates
@@ -79,8 +102,8 @@ export function FirmwareCard({
               variant="secondary"
               size="sm"
               className="gap-2 bg-indigo-500 text-white shadow-md shadow-indigo-900/30 hover:bg-indigo-600"
-              disabled={!pendingVersion}
-              onClick={onApplyUpdate}
+              disabled={!pendingVersion || updateInProgress}
+              onClick={() => setConfirmApply(true)}
             >
               <ArrowDownToLine className="h-4 w-4" />
               Apply update
@@ -98,11 +121,89 @@ export function FirmwareCard({
           </div>
           <Switch
             checked={!!status.autoUpdateEnabled}
-            onCheckedChange={(checked) => onToggleAutoUpdate?.(checked)}
+            onCheckedChange={(checked) => {
+              onToggleAutoUpdate?.(checked);
+              setFeedback(checked ? "Auto-updates enabled (mock)." : "Auto-updates paused (mock).");
+            }}
             aria-label="Toggle auto-updates"
           />
         </div>
       </CardContent>
+
+      {updateInProgress && (
+        <div className="border-t border-slate-800 bg-indigo-950/20 px-6 py-4">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-indigo-200">Update in progress...</span>
+              <span className="font-mono text-indigo-300">{updateProgress}%</span>
+            </div>
+            <div className="h-2 overflow-hidden rounded-full bg-slate-800">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-500"
+                style={{ width: `${updateProgress}%` }}
+              />
+            </div>
+            <p className="text-xs text-slate-400">
+              Do not power off the router. This may take 2-3 minutes.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {feedback && !updateInProgress && (
+        <div className="px-6 pb-4 text-xs text-slate-300" role="status" aria-live="polite">
+          {feedback}
+        </div>
+      )}
+
+      <Dialog open={confirmApply} onOpenChange={(open) => !open && setConfirmApply(false)}>
+        <DialogContent className="bg-slate-950 text-slate-100">
+          <DialogHeader>
+            <DialogTitle>Apply firmware update?</DialogTitle>
+            <DialogDescription>
+              Devices may restart and disconnect during the update. Ensure off-peak hours before proceeding.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="rounded-md border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm text-slate-200">
+            Pending version: {pendingVersion ?? "Unknown"}
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="ghost" size="sm" onClick={() => setConfirmApply(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => {
+                setConfirmApply(false);
+                setUpdateInProgress(true);
+                setFeedback("Starting update...");
+                
+                // Simulate update progress
+                let progress = 0;
+                const interval = setInterval(() => {
+                  progress += Math.random() * 15 + 5;
+                  if (progress >= 100) {
+                    progress = 100;
+                    setUpdateProgress(100);
+                    clearInterval(interval);
+                    setTimeout(() => {
+                      onApplyUpdate?.();
+                      setUpdateInProgress(false);
+                      setUpdateProgress(0);
+                      setFeedback("Update completed successfully!");
+                    }, 1000);
+                  } else {
+                    setUpdateProgress(Math.floor(progress));
+                  }
+                }, 800);
+              }}
+            >
+              Confirm
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

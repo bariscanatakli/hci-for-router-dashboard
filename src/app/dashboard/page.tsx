@@ -17,6 +17,10 @@ export default function DashboardPage() {
         </p>
       </div>
 
+      <div className="rounded-md border border-amber-800/40 bg-amber-950/20 px-3 py-2 text-xs text-amber-100">
+        Preview data only — connect telemetry to see live router status and actions.
+      </div>
+
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <InternetStatusCard />
         <WifiStatusCard />

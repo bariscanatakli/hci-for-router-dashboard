@@ -43,22 +43,26 @@ const mockConnectedDevices = [
 export default function WifiPage() {
   const [config, setConfig] = useState<WifiConfig>(mockConfig);
   const [status, setStatus] = useState<WifiStatus>(mockStatus);
+  const [pendingStatus, setPendingStatus] = useState<WifiStatus | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [showDevices, setShowDevices] = useState(false);
+
+  const effectiveStatus = pendingStatus ?? status;
 
   const regenerateGuest = () => {
     const randomSuffix = Math.floor(Math.random() * 9000 + 1000);
     const newSsid = `Guest-${randomSuffix}`;
     const newPassword = `guest-${randomSuffix}`;
     setConfig((c) => ({ ...c, guestSsid: newSsid, guestPassword: newPassword, guestEnabled: true }));
-    setStatus((s) => ({ ...s, guestEnabled: true }));
+    setPendingStatus((s) => ({ ...(s ?? effectiveStatus), guestEnabled: true }));
   };
 
   const signalTone = useMemo(() => {
-    if (status.signalStrength >= 90) return "text-emerald-300";
-    if (status.signalStrength >= 70) return "text-blue-300";
-    if (status.signalStrength >= 50) return "text-amber-300";
+    if (effectiveStatus.signalStrength >= 90) return "text-emerald-300";
+    if (effectiveStatus.signalStrength >= 70) return "text-blue-300";
+    if (effectiveStatus.signalStrength >= 50) return "text-amber-300";
     return "text-red-300";
-  }, [status.signalStrength]);
+  }, [effectiveStatus.signalStrength]);
 
   return (
     <div className="space-y-8">
@@ -70,22 +74,70 @@ export default function WifiPage() {
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-slate-50">Wi-Fi</h1>
             <p className="text-sm text-slate-400">
-              Configure wireless networks, guest access, and security posture.
+              Configure wireless networks, guest access, and security posture. Preview mode — changes do not persist.
             </p>
           </div>
         </div>
       </header>
 
+      <div className="rounded-md border border-amber-800/40 bg-amber-950/20 px-3 py-2 text-xs text-amber-100">
+        Preview data only. Apply buttons simulate changes locally; real updates will come once API wiring is enabled.
+      </div>
+
+      {pendingStatus && (
+        <div className="flex flex-col gap-2 rounded-md border border-indigo-800 bg-indigo-950/30 px-3 py-3 text-sm text-indigo-100 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col">
+            <span className="font-semibold">Pending Wi-Fi changes</span>
+            <span className="text-xs text-indigo-200">Apply to confirm or discard to revert.</span>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant="ghost"
+              className="text-indigo-100"
+              onClick={() => {
+                setPendingStatus(null);
+                setNotice("Changes discarded.");
+                setTimeout(() => setNotice(null), 2000);
+              }}
+            >
+              Discard
+            </Button>
+            <Button
+              size="sm"
+              className="bg-indigo-500 text-white hover:bg-indigo-600"
+              onClick={() => {
+                if (!pendingStatus) return;
+                setStatus(pendingStatus);
+                setPendingStatus(null);
+                setNotice("Wi-Fi changes applied (mock).");
+                setTimeout(() => setNotice(null), 2000);
+              }}
+            >
+              Apply changes
+            </Button>
+          </div>
+        </div>
+      )}
+
       <section className="grid gap-4 md:grid-cols-3">
         <StatusCard
           title="Wi-Fi Enabled"
           description="Broadcast status and control"
-          value={status.enabled ? "On" : "Off"}
-          accent={status.enabled ? "emerald" : "red"}
+          value={
+            pendingStatus
+              ? `${status.enabled ? "On" : "Off"} → ${pendingStatus.enabled ? "On" : "Off"}`
+              : effectiveStatus.enabled
+                ? "On"
+                : "Off"
+          }
+          accent={effectiveStatus.enabled ? "emerald" : "red"}
           action={
             <Switch
-              checked={status.enabled}
-              onCheckedChange={(checked) => setStatus((s) => ({ ...s, enabled: checked }))}
+              checked={effectiveStatus.enabled}
+              onCheckedChange={(checked) =>
+                setPendingStatus((s) => ({ ...(s ?? effectiveStatus), enabled: checked, guestEnabled: checked ? effectiveStatus.guestEnabled : false }))
+              }
               aria-label="Toggle Wi-Fi"
             />
           }
@@ -93,13 +145,13 @@ export default function WifiPage() {
         <StatusCard
           title="Signal Quality"
           description="Current strength to clients"
-          value={`${status.signalStrength}%`}
+          value={`${effectiveStatus.signalStrength}%`}
           accent="indigo"
         />
         <StatusCard
           title="Connected Devices"
           description="Today’s active clients"
-          value={`${status.connectedDevices} devices`}
+          value={`${effectiveStatus.connectedDevices} devices`}
           accent="blue"
           onClick={() => setShowDevices((v) => !v)}
         />
@@ -107,7 +159,7 @@ export default function WifiPage() {
 
       <section className="grid gap-4 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-4">
-          <WifiForm config={config} onChange={setConfig} disabled={!status.enabled} />
+          <WifiForm config={config} onChange={setConfig} disabled={!effectiveStatus.enabled} />
 
           <Card className="border-slate-800 bg-slate-900/50">
             <CardHeader className="flex flex-row items-start justify-between gap-3">
@@ -121,14 +173,14 @@ export default function WifiPage() {
                 </CardDescription>
               </div>
               <span className={cn("text-lg font-semibold", signalTone)}>
-                {status.currentThroughputMbps} Mbps
+                {effectiveStatus.currentThroughputMbps} Mbps
               </span>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="h-2 overflow-hidden rounded-full bg-slate-800">
                 <div
                   className="h-full rounded-full bg-gradient-to-r from-indigo-500 via-blue-500 to-emerald-500"
-                  style={{ width: `${Math.min((status.currentThroughputMbps / 500) * 100, 100)}%` }}
+                  style={{ width: `${Math.min((effectiveStatus.currentThroughputMbps / 500) * 100, 100)}%` }}
                 />
               </div>
               <p className="text-xs text-slate-400">
@@ -140,11 +192,11 @@ export default function WifiPage() {
 
         <div className="space-y-4">
           <GuestWifiToggle
-            enabled={status.enabled && status.guestEnabled}
+            enabled={effectiveStatus.enabled && effectiveStatus.guestEnabled}
             guestSsid={config.guestSsid}
             guestPassword={config.guestPassword}
             onToggle={(enabled) => {
-              setStatus((s) => ({ ...s, guestEnabled: enabled }));
+              setPendingStatus((s) => ({ ...(s ?? effectiveStatus), guestEnabled: enabled }));
               setConfig((c) => ({ ...c, guestEnabled: enabled }));
             }}
             onUpdateCredentials={(ssid, password) =>
@@ -197,6 +249,16 @@ export default function WifiPage() {
           )}
         </div>
       </section>
+
+      {notice && (
+        <div
+          className="rounded-md border border-slate-800 bg-slate-950/70 px-3 py-2 text-xs text-slate-100"
+          role="status"
+          aria-live="polite"
+        >
+          {notice}
+        </div>
+      )}
     </div>
   );
 }

@@ -16,7 +16,7 @@ import {
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { label: "Overview", href: "/dashboard", icon: Gauge },
+  { label: "Dashboard", href: "/dashboard", icon: Gauge },
   { label: "Devices", href: "/devices", icon: HardDrive },
   { label: "Wi-Fi", href: "/wifi", icon: Wifi },
   { label: "Security", href: "/security", icon: ShieldCheck },

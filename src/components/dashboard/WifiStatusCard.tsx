@@ -16,13 +16,14 @@ import { Switch } from "@/components/ui/switch";
 
 export function WifiStatusCard() {
   const router = useRouter();
-  const [wifiStatus, setWifiStatus] = useState({
+  const [wifiStatus] = useState({
     ssid: "HomeNetwork_5G",
     band: "5GHz",
     enabled: true,
     guestEnabled: false,
     connectedDevices: 8,
     signalStrength: 95,
+    issues: ["Guest network off"],
   });
 
   const effectiveSignal = useMemo(
@@ -33,6 +34,7 @@ export function WifiStatusCard() {
     () => (wifiStatus.enabled ? wifiStatus.connectedDevices : 0),
     [wifiStatus.enabled, wifiStatus.connectedDevices]
   );
+  const hasWarning = !wifiStatus.enabled || effectiveSignal < 50;
 
   return (
     <Card className="border-slate-800 bg-slate-900/50">
@@ -46,19 +48,18 @@ export function WifiStatusCard() {
             <CardDescription className="text-xs">
               Wireless network overview
             </CardDescription>
+            <p className="text-[11px] text-amber-200">
+              <strong>Preview only</strong> — Changes here don&apos;t persist.{" "}
+              <Link href="/wifi" className="underline underline-offset-2 hover:text-amber-100">
+                Go to Wi-Fi settings →
+              </Link>
+            </p>
           </div>
           <Switch
             checked={wifiStatus.enabled}
-            onCheckedChange={(enabled) =>
-              setWifiStatus((prev) => ({
-                ...prev,
-                enabled,
-                guestEnabled: enabled ? prev.guestEnabled : false,
-                signalStrength: enabled ? prev.signalStrength : 0,
-                connectedDevices: enabled ? prev.connectedDevices : 0,
-              }))
-            }
-            aria-label="Toggle Wi-Fi broadcast"
+            disabled
+            aria-label="Toggle Wi-Fi broadcast (preview only - disabled)"
+            title="Preview only. Go to Wi-Fi page to enable/disable"
           />
         </div>
       </CardHeader>
@@ -90,6 +91,11 @@ export function WifiStatusCard() {
               style={{ width: `${effectiveSignal}%` }}
             />
           </div>
+          {hasWarning && (
+            <p className="text-[11px] text-amber-200">
+              Signal or radio is limited. <Link href="/wifi" className="underline underline-offset-2">Open Wi‑Fi settings</Link>
+            </p>
+          )}
         </div>
 
         <div className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-950/50 p-3">
@@ -106,22 +112,34 @@ export function WifiStatusCard() {
           </button>
         </div>
 
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-slate-300">Guest Network</span>
-          <Switch
-            checked={wifiStatus.guestEnabled}
-            onCheckedChange={(guestEnabled) =>
-              setWifiStatus((prev) => ({ ...prev, guestEnabled }))
-            }
-            disabled={!wifiStatus.enabled}
-            aria-label="Toggle guest Wi-Fi"
-          />
+        <div className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-950/50 p-3">
+          <span className="text-sm text-slate-300">Guest Network</span>
+          <div className="flex items-center gap-2">
+            <span className={`text-xs font-medium ${wifiStatus.guestEnabled ? "text-emerald-300" : "text-slate-400"}`}>
+              {wifiStatus.guestEnabled ? "Enabled" : "Disabled"}
+            </span>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => router.push("/wifi")}
+              className="h-7 text-xs"
+            >
+              Configure
+            </Button>
+          </div>
         </div>
 
         {!wifiStatus.enabled && (
           <p className="rounded-md border border-slate-800 bg-slate-950/70 px-3 py-2 text-xs text-slate-400">
             Wi-Fi is off in this preview. Enable it or open Wi-Fi settings to apply changes.
           </p>
+        )}
+        {wifiStatus.issues.length > 0 && (
+          <ul className="rounded-md border border-amber-800/40 bg-amber-950/30 px-3 py-2 text-xs text-amber-100">
+            {wifiStatus.issues.map((issue) => (
+              <li key={issue}>{issue}</li>
+            ))}
+          </ul>
         )}
 
         <p className="text-xs text-slate-500">

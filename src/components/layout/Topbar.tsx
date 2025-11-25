@@ -4,6 +4,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Activity, Bell, CheckCircle2, Info, Menu, Search, Settings, WifiOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,8 +27,10 @@ const navItems = [
 ];
 
 export function Topbar() {
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
   const [toast, setToast] = useState<{ message: string; tone?: "success" | "info" | "warning" } | null>(null);
   const searchRef = useRef<HTMLInputElement | null>(null);
 
@@ -42,6 +45,37 @@ export function Topbar() {
     if (!query) return pool.slice(0, 3);
     return pool.filter((item) => item.label.toLowerCase().includes(query.toLowerCase())).slice(0, 4);
   }, [query]);
+
+  // Handle keyboard navigation
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!searchFocused || suggestions.length === 0) return;
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setSelectedIndex((prev) => (prev < suggestions.length - 1 ? prev + 1 : 0));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setSelectedIndex((prev) => (prev > 0 ? prev - 1 : suggestions.length - 1));
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (selectedIndex >= 0 && selectedIndex < suggestions.length) {
+        router.push(suggestions[selectedIndex].href);
+        setSearchFocused(false);
+        setQuery("");
+        setSelectedIndex(-1);
+      } else if (suggestions.length > 0) {
+        // If no selection, navigate to first suggestion
+        router.push(suggestions[0].href);
+        setSearchFocused(false);
+        setQuery("");
+        setSelectedIndex(-1);
+      }
+    } else if (e.key === "Escape") {
+      setSearchFocused(false);
+      setSelectedIndex(-1);
+      searchRef.current?.blur();
+    }
+  };
 
   const notifications = [
     { id: "n1", icon: CheckCircle2, tone: "text-emerald-300", title: "Firmware check passed", time: "5m ago" },
@@ -104,33 +138,50 @@ export function Topbar() {
           <Input
             placeholder="Quick search (devices, SSIDs, ports)"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setSelectedIndex(-1); // Reset selection on typing
+            }}
             onFocus={() => setSearchFocused(true)}
-            onBlur={() => setTimeout(() => setSearchFocused(false), 120)}
+            onBlur={() => setTimeout(() => {
+              setSearchFocused(false);
+              setSelectedIndex(-1);
+            }, 200)}
+            onKeyDown={handleSearchKeyDown}
             ref={searchRef}
             className={cn(
               "h-8 border-0 bg-transparent px-0 text-sm text-slate-100 placeholder:text-slate-500",
               "focus-visible:ring-0 focus-visible:ring-offset-0"
             )}
             aria-label="Global search"
+            aria-expanded={searchFocused && suggestions.length > 0}
+            aria-controls="search-suggestions"
+            role="combobox"
           />
         </div>
-        <div
-          className="ml-auto flex items-center gap-1 text-[11px] text-slate-500"
-          title="Search across devices, SSIDs, ports. Cmd/Ctrl+K to focus."
-        >
-          <Info className="h-3.5 w-3.5 text-slate-400" aria-hidden />
-          <span>What’s this?</span>
-        </div>
         {searchFocused && suggestions.length > 0 && (
-          <div className="absolute left-0 right-0 top-full mt-2 rounded-xl border border-slate-800 bg-slate-950/95 p-3 shadow-lg shadow-slate-950/50 backdrop-blur">
-            <p className="mb-2 text-[11px] uppercase tracking-wide text-slate-500">Shortcuts</p>
+          <div 
+            id="search-suggestions"
+            className="absolute left-0 right-0 top-full mt-2 rounded-xl border border-slate-800 bg-slate-950/95 p-3 shadow-lg shadow-slate-950/50 backdrop-blur"
+            role="listbox"
+          >
+            <p className="mb-2 text-[11px] uppercase tracking-wide text-slate-500">
+              Shortcuts (↑↓ to navigate, Enter to select, Esc to close)
+            </p>
             <div className="flex flex-wrap gap-2">
-              {suggestions.map((item) => (
+              {suggestions.map((item, index) => (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="rounded-full border border-slate-800 bg-slate-900 px-2.5 py-1 text-[12px] text-slate-100 hover:text-indigo-200"
+                  className={cn(
+                    "rounded-full border px-2.5 py-1 text-[12px] transition-colors",
+                    index === selectedIndex
+                      ? "border-indigo-500 bg-indigo-950/60 text-indigo-200 ring-2 ring-indigo-500/50"
+                      : "border-slate-800 bg-slate-900 text-slate-100 hover:border-indigo-600 hover:text-indigo-200"
+                  )}
+                  role="option"
+                  aria-selected={index === selectedIndex}
+                  tabIndex={-1}
                 >
                   {item.label}
                 </Link>
@@ -171,18 +222,18 @@ export function Topbar() {
 
       <div className="ml-auto flex items-center gap-2">
         <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-9 w-9 rounded-full text-slate-200 hover:bg-slate-900"
-            onClick={() => triggerToast("Notifications loaded", "info")}
-            aria-label="Open notifications"
-            data-hci="notif-button"
-          >
-            <Bell className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 rounded-full text-slate-200 hover:bg-slate-900"
+              onClick={() => triggerToast("Notifications loaded", "info")}
+              aria-label="Open notifications"
+              data-hci="notif-button"
+            >
+              <Bell className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-72 bg-slate-950 text-slate-100">
             {notifications.map((n) => {
               const Icon = n.icon;
@@ -199,6 +250,16 @@ export function Topbar() {
           </DropdownMenuContent>
         </DropdownMenu>
         <Separator orientation="vertical" className="hidden h-6 bg-slate-800 lg:block" />
+        <Button
+          variant="ghost"
+          size="icon"
+          className="hidden h-9 w-9 rounded-full text-slate-200 hover:bg-slate-900 lg:inline-flex"
+          onClick={() => triggerToast("Tips: Cmd/Ctrl+K search, ↑↓ navigate, Enter open, Esc close.", "info")}
+          aria-label="Usage tips"
+          data-hci="info-button"
+        >
+          <Info className="h-4 w-4" />
+        </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button

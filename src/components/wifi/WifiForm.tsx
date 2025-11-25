@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ChevronDown, Lock, Radio } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -23,9 +23,17 @@ const modeOptions: WifiConfig["mode"][] = ["802.11n", "802.11ac", "802.11ax"];
 export function WifiForm({ config, onChange, disabled = false }: WifiFormProps) {
   const [status, setStatus] = useState<{ message: string; tone: "success" | "warning" | "info" } | null>(null);
   const [lastSaved, setLastSaved] = useState<WifiConfig>(config);
+  const [isDirty, setIsDirty] = useState(false);
   const updateField = <K extends keyof WifiConfig>(key: K, value: WifiConfig[K]) => {
     onChange({ ...config, [key]: value });
+    setIsDirty(true);
   };
+
+  useEffect(() => {
+    if (!isDirty) {
+      setLastSaved(config);
+    }
+  }, [config, isDirty]);
 
   const ssidError = !config.ssid.trim() ? "Network name is required." : "";
   const passwordError = config.password.trim().length < 8 ? "Password must be at least 8 characters." : "";
@@ -39,11 +47,13 @@ export function WifiForm({ config, onChange, disabled = false }: WifiFormProps) 
       return;
     }
     setLastSaved(config);
+    setIsDirty(false);
     setStatus({ message: "Wi-Fi settings saved (mock).", tone: "success" });
   };
 
   const handleCancel = () => {
     onChange(lastSaved);
+    setIsDirty(false);
     setStatus({ message: "Changes reverted.", tone: "info" });
   };
 
@@ -56,7 +66,7 @@ export function WifiForm({ config, onChange, disabled = false }: WifiFormProps) 
             Wi-Fi Configuration
           </CardTitle>
           <CardDescription className="text-xs">
-            Update SSID, security, and radio parameters. Changes apply instantly.
+            Update SSID, security, and radio parameters. Changes save when you click Save; use Cancel to revert.
           </CardDescription>
         </div>
         <Switch
