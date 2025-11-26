@@ -51,12 +51,14 @@ export default function SecurityPage() {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadProfile();
   }, [loadProfile]);
 
   useEffect(() => {
     if (retryIn === null) return;
     if (retryIn <= 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       loadProfile();
       return;
     }
@@ -103,8 +105,8 @@ export default function SecurityPage() {
 
   if (loading) {
     return (
-      <div className="space-y-8">
-        <header className="flex flex-col gap-2">
+      <div className="space-y-8" data-tour="page-security">
+        <header className="flex flex-col gap-2" data-tour="security-header">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-500 text-white shadow-lg shadow-indigo-900/40">
               <Shield className="h-5 w-5" />
@@ -147,7 +149,7 @@ export default function SecurityPage() {
             </div>
             <div>
               <h1 className="text-3xl font-bold tracking-tight text-slate-50">Security</h1>
-              <p className="text-sm text-slate-400">We couldnt load settings. Retry or use cached data.</p>
+              <p className="text-sm text-slate-400">We couldn&apos;t load settings. Retry or use cached data.</p>
             </div>
           </div>
         </header>
@@ -182,18 +184,18 @@ export default function SecurityPage() {
   }
 
   return (
-    <div className="space-y-8">
-      <header className="flex flex-col gap-2">
+    <div className="space-y-8" data-tour="page-security">
+      <header className="flex flex-col gap-2" data-tour="security-header">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-500 text-white shadow-lg shadow-indigo-900/40">
             <Shield className="h-5 w-5" />
           </div>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight text-slate-50">Security</h1>
-            <p className="text-sm text-slate-400">
-              Adjust firewall posture, manage port forwards, and oversee threat prevention.
-            </p>
-          </div>
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight text-slate-50" data-tour="security-heading">Security</h1>
+              <p className="text-sm text-slate-400">
+                Adjust firewall posture, manage port forwards, and oversee threat prevention.
+              </p>
+            </div>
         </div>
       </header>
 

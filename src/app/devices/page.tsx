@@ -95,10 +95,10 @@ export default function DevicesPage() {
   };
 
   return (
-    <div className="space-y-8">
-      <header className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+    <div className="space-y-8" data-tour="page-devices">
+      <header className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between" data-tour="devices-header">
         <div className="space-y-1">
-          <h1 className="text-3xl font-bold tracking-tight text-slate-50">
+          <h1 className="text-3xl font-bold tracking-tight text-slate-50" data-tour="devices-heading">
             Devices
           </h1>
           <p className="text-sm text-slate-400">
@@ -127,11 +127,11 @@ export default function DevicesPage() {
         </div>
       </header>
 
-      <div className="rounded-md border border-amber-800/40 bg-amber-950/20 px-3 py-2 text-xs text-amber-100">
+      <div className="rounded-md border border-amber-800/40 bg-amber-950/20 px-3 py-2 text-xs text-amber-100" data-tour="devices-info">
         Preview data only. Device list and actions are simulated until API wiring is enabled.
       </div>
 
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" data-tour="devices-stats">
         <StatCard label="Total devices" value={totalCount} />
         <StatCard label="Online" value={onlineCount} tone="positive" />
         <StatCard label="Offline" value={offlineCount} tone="warning" />

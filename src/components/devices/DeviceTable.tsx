@@ -5,6 +5,7 @@ import { NetworkDevice } from "@/lib/types/devices";
 import { DeviceRow } from "./DeviceRow";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { formatRelativeTime } from "@/lib/utils";
 
 interface DeviceTableProps {
   devices: NetworkDevice[];
@@ -14,7 +15,7 @@ interface DeviceTableProps {
 
 export function DeviceTable({ devices, onInspect, summary }: DeviceTableProps) {
   return (
-    <Card className="border-slate-800 bg-slate-900/40">
+    <Card className="border-slate-800 bg-slate-900/40" data-tour="devices-table">
       <CardHeader>
         <CardTitle className="text-base text-slate-50">Devices</CardTitle>
         {summary && <p className="text-xs text-slate-400">{summary}</p>}

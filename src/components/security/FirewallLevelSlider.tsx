@@ -1,10 +1,11 @@
 "use client";
 
-import React from "react";
-import { ShieldCheck, AlertTriangle } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { Shield, ShieldAlert, ShieldCheck, ShieldX, Info, Clock, AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
+import { formatRelativeTime } from "@/lib/utils";
 
 interface FirewallLevelSliderProps {
   value: number;
@@ -19,11 +20,23 @@ export function FirewallLevelSlider({
   intrusionPreventionEnabled,
   onToggleIps,
 }: FirewallLevelSliderProps) {
+  const [lastScan, setLastScan] = useState<Date | null>(null);
+
   const levels = [
     { label: "Low", value: 1, desc: "Basic NAT + SPI" },
     { label: "Medium", value: 2, desc: "Blocks risky ports" },
     { label: "High", value: 3, desc: "Strict, blocks new services" },
   ];
+
+  useEffect(() => {
+    // Simulate fetching last scan date
+    const fetchLastScan = () => {
+      const now = new Date();
+      setLastScan(now);
+    };
+
+    fetchLastScan();
+  }, []);
 
   return (
     <Card className="border-slate-800 bg-slate-900/50">
@@ -77,6 +90,17 @@ export function FirewallLevelSlider({
             />
           </div>
         )}
+
+        {/* Last Scan section - update the date display */}
+        <div className="mt-4 flex items-center justify-between rounded-lg border border-slate-700/50 bg-slate-800/30 px-3 py-2 text-xs">
+          <div className="flex items-center gap-2 text-slate-400">
+            <Clock className="h-3.5 w-3.5" />
+            <span>Last security scan</span>
+          </div>
+          <span className="font-medium text-slate-300">
+            {lastScan ? formatRelativeTime(lastScan) : "Never"}
+          </span>
+        </div>
       </CardContent>
     </Card>
   );

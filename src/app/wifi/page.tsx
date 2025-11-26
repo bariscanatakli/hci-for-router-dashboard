@@ -65,14 +65,14 @@ export default function WifiPage() {
   }, [effectiveStatus.signalStrength]);
 
   return (
-    <div className="space-y-8">
-      <header className="flex flex-col gap-2">
+    <div className="space-y-8" data-tour="page-wifi">
+      <header className="flex flex-col gap-2" data-tour="wifi-header">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-500 text-white shadow-lg shadow-indigo-900/40">
             <Wifi className="h-5 w-5" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-slate-50">Wi-Fi</h1>
+            <h1 className="text-3xl font-bold tracking-tight text-slate-50" data-tour="wifi-heading">Wi-Fi</h1>
             <p className="text-sm text-slate-400">
               Configure wireless networks, guest access, and security posture. Preview mode — changes do not persist.
             </p>
@@ -80,7 +80,7 @@ export default function WifiPage() {
         </div>
       </header>
 
-      <div className="rounded-md border border-amber-800/40 bg-amber-950/20 px-3 py-2 text-xs text-amber-100">
+      <div className="rounded-md border border-amber-800/40 bg-amber-950/20 px-3 py-2 text-xs text-amber-100" data-tour="wifi-banner">
         Preview data only. Apply buttons simulate changes locally; real updates will come once API wiring is enabled.
       </div>
 
@@ -120,7 +120,7 @@ export default function WifiPage() {
         </div>
       )}
 
-      <section className="grid gap-4 md:grid-cols-3">
+      <section className="grid gap-4 md:grid-cols-3" data-tour="wifi-status">
         <StatusCard
           title="Wi-Fi Enabled"
           description="Broadcast status and control"

@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { SystemStatus } from "@/lib/types/system";
-import { cn } from "@/lib/utils";
+import { cn, formatRelativeTime, formatShortDate } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -70,7 +70,7 @@ export function FirmwareCard({
           </div>
           <div className="space-y-1">
             <p className="text-xs text-slate-400">Last checked</p>
-            <p className="text-sm text-slate-100">{status.lastChecked ?? "Unknown"}</p>
+            <p className="text-sm text-slate-100">{status.lastChecked ? formatRelativeTime(status.lastChecked) : "Unknown"}</p>
           </div>
         </div>
 

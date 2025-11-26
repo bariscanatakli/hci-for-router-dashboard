@@ -11,8 +11,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useNavigateAndScroll } from "@/hooks/useNavigateAndScroll";
 
 export function DevicesSummaryCard() {
+  const navigateAndScroll = useNavigateAndScroll();
+
   const deviceStats = {
     total: 12,
     online: 8,
@@ -24,8 +27,26 @@ export function DevicesSummaryCard() {
     ],
   };
 
+  const handleCardClick = () => {
+    navigateAndScroll("/devices", '[data-tour="devices-table"]', {
+      block: "start",
+      highlight: true,
+    });
+  };
+
   return (
-    <Card className="border-slate-800 bg-slate-900/50">
+    <Card
+      className="cursor-pointer transition-all hover:border-indigo-500/50 hover:shadow-lg hover:shadow-indigo-950/20"
+      onClick={handleCardClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          handleCardClick();
+        }
+      }}
+    >
       <CardHeader>
         <div className="space-y-1">
           <CardTitle className="flex items-center gap-2 text-base">

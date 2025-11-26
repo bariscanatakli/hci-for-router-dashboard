@@ -28,7 +28,10 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden min-h-screen border-r border-slate-900 bg-slate-950/80 px-3 py-6 shadow-lg shadow-indigo-950/20 backdrop-blur md:flex md:w-64 md:flex-col">
+    <aside
+      data-tour="sidebar-nav"
+      className="hidden min-h-screen border-r border-slate-900 bg-slate-950/80 px-3 py-6 shadow-lg shadow-indigo-950/20 backdrop-blur md:flex md:w-64 md:flex-col"
+    >
       <div className="mb-8 flex items-center gap-3 rounded-xl border border-slate-900 bg-slate-900/60 px-3 py-2">
         <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-500 text-base font-semibold text-white shadow-lg shadow-indigo-900/40">
           RT
@@ -42,27 +45,29 @@ export function Sidebar() {
       </div>
 
       <nav className="space-y-1">
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const active = pathname.startsWith(item.href);
+        <div data-tour="sidebar-links" className="flex flex-col gap-1">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const active = pathname.startsWith(item.href);
 
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex items-center gap-3 rounded-lg border border-transparent px-3 py-2 text-sm font-medium transition-all",
-                "hover:border-slate-800 hover:bg-slate-900/70 hover:text-slate-50",
-                active
-                  ? "border-indigo-500/60 bg-indigo-500/10 text-slate-50 shadow-inner shadow-indigo-900/30"
-                  : "text-slate-300"
-              )}
-            >
-              <Icon className="h-4 w-4" />
-              <span>{item.label}</span>
-            </Link>
-          );
-        })}
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "flex items-center gap-3 rounded-lg border border-transparent px-3 py-2 text-sm font-medium transition-all",
+                  "hover:border-slate-800 hover:bg-slate-900/70 hover:text-slate-50",
+                  active
+                    ? "border-indigo-500/60 bg-indigo-500/10 text-slate-50 shadow-inner shadow-indigo-900/30"
+                    : "text-slate-300"
+                )}
+              >
+                <Icon className="h-4 w-4" />
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
+        </div>
       </nav>
 
       <div className="mt-auto rounded-lg border border-slate-900 bg-slate-900/70 px-3 py-3 text-xs text-slate-400">

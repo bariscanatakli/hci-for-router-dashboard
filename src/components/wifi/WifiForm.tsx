@@ -31,6 +31,7 @@ export function WifiForm({ config, onChange, disabled = false }: WifiFormProps) 
 
   useEffect(() => {
     if (!isDirty) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLastSaved(config);
     }
   }, [config, isDirty]);
@@ -58,7 +59,7 @@ export function WifiForm({ config, onChange, disabled = false }: WifiFormProps) 
   };
 
   return (
-    <Card className={cn("border-slate-800 bg-slate-900/50", disabled && "opacity-60")}>
+    <Card className={cn("border-slate-800 bg-slate-900/50", disabled && "opacity-60")} data-tour="wifi-form">
       <CardHeader className="flex flex-row items-start justify-between gap-3">
         <div className="space-y-1">
           <CardTitle className="flex items-center gap-2 text-base">

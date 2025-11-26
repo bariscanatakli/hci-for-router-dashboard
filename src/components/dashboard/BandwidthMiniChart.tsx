@@ -16,6 +16,7 @@ export function BandwidthMiniChart() {
   const [hoveredValue, setHoveredValue] = React.useState<number | null>(null);
   const [hoveredTime, setHoveredTime] = React.useState<string | null>(null);
   const [baseTime, setBaseTime] = React.useState<number | null>(null);
+  const [fallbackTime] = React.useState(() => Date.now());
 
   const chartData = {
     download: [65, 72, 68, 85, 91, 78, 95, 88, 92, 87, 94, 90],
@@ -76,8 +77,8 @@ export function BandwidthMiniChart() {
     const max = Math.max(...series.map((s) => s.value));
     const min = Math.min(...series.map((s) => s.value));
     const range = max - min || 1;
-    const firstTime = formatTime(series[0]?.timestamp ?? Date.now());
-    const lastTime = formatTime(series[series.length - 1]?.timestamp ?? Date.now());
+    const firstTime = formatTime(series[0]?.timestamp ?? fallbackTime);
+    const lastTime = formatTime(series[series.length - 1]?.timestamp ?? fallbackTime);
 
     return (
       <div className="relative">

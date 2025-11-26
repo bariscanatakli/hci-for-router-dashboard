@@ -48,6 +48,7 @@ export default function SystemPage() {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadSystemInfo();
 
     // Refresh every 30 seconds
@@ -58,6 +59,7 @@ export default function SystemPage() {
   useEffect(() => {
     if (retryIn === null) return;
     if (retryIn <= 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       loadSystemInfo();
       return;
     }
@@ -138,7 +140,7 @@ export default function SystemPage() {
       <div className="space-y-8">
         <header className="space-y-2">
           <h1 className="text-3xl font-bold tracking-tight text-slate-50">System</h1>
-          <p className="text-sm text-slate-400">We couldn't load system data. Retry or use cached info.</p>
+          <p className="text-sm text-slate-400">We couldn&apos;t load system data. Retry or use cached info.</p>
         </header>
         <Card className="border-amber-800/60 bg-amber-950/40">
           <CardContent className="space-y-3 p-4 text-sm text-amber-100">
@@ -171,33 +173,39 @@ export default function SystemPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8" data-tour="page-system">
       <header className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-50">System</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-slate-50" data-tour="system-heading">System</h1>
         <p className="text-sm text-slate-400">
           Check firmware, uptime, and perform safe maintenance actions. Data is mocked until wired to API.
         </p>
       </header>
 
-      <section className="grid gap-4 md:grid-cols-3">
-        <KpiCard title="Uptime" value={uptime} icon={<Timer className="h-4 w-4" />} />
-        <KpiCard title="Firmware" value={status.firmwareVersion} icon={<HardDrive className="h-4 w-4" />} />
-        <KpiCard title="Health" value={status.health} icon={<Shield className="h-4 w-4" />} accent={status.health} />
-      </section>
+      <div data-tour="page-header" className="flex items-center gap-3 mb-6">
+        <section className="grid gap-4 md:grid-cols-3">
+          <KpiCard title="Uptime" value={uptime} icon={<Timer className="h-4 w-4" />} />
+          <KpiCard title="Firmware" value={status.firmwareVersion} icon={<HardDrive className="h-4 w-4" />} />
+          <KpiCard title="Health" value={status.health} icon={<Shield className="h-4 w-4" />} accent={status.health} />
+        </section>
+      </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-4">
-          <FirmwareCard
-            status={status}
-            pendingVersion="v2.5.0"
-            onCheckUpdate={() => {}}
-            onApplyUpdate={() => {}}
-            onToggleAutoUpdate={(enabled) => {
-              setStatus((s) => s ? { ...s, autoUpdateEnabled: enabled } : null);
-              setAutoUpdateEnabled(enabled);
-            }}
-          />
-          <RebootCard onReboot={handleReboot} onRestartModem={() => {}} />
+          <div data-tour="firmware-card">
+            <FirmwareCard
+              status={status}
+              pendingVersion="v2.5.0"
+              onCheckUpdate={() => {}}
+              onApplyUpdate={() => {}}
+              onToggleAutoUpdate={(enabled) => {
+                setStatus((s) => s ? { ...s, autoUpdateEnabled: enabled } : null);
+                setAutoUpdateEnabled(enabled);
+              }}
+            />
+          </div>
+          <div data-tour="reboot-card">
+            <RebootCard onReboot={handleReboot} onRestartModem={() => {}} />
+          </div>
         </div>
         <div className="space-y-3">
           {toast && (

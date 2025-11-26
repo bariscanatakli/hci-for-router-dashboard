@@ -43,9 +43,9 @@ export default function PerformancePage() {
   }, [samples]);
 
   return (
-    <div className="space-y-8">
-      <header className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-50">Performance</h1>
+    <div className="space-y-8" data-tour="page-performance">
+      <header className="space-y-2" data-tour="performance-header">
+        <h1 className="text-3xl font-bold tracking-tight text-slate-50" data-tour="performance-heading">Performance</h1>
         <p className="text-sm text-slate-400">
           Monitor throughput, latency, and reliability trends. Data is mocked until telemetry is connected.
         </p>
@@ -65,7 +65,7 @@ export default function PerformancePage() {
         <KpiCard title="Avg Latency" value={`${kpis.avgLatency.toFixed(0)} ms`} icon={<LatencyIcon />} />
       </section>
 
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid gap-4 lg:grid-cols-3" data-tour="performance-charts">
         <div className="lg:col-span-2 space-y-4">
           <BandwidthChart samples={samples} timeRangeLabel={timeRange} />
           <LatencyChart samples={samples} targetMs={30} timeRangeLabel={timeRange} />

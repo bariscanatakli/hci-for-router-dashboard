@@ -24,7 +24,7 @@ export function InternetStatusCard() {
   };
 
   return (
-    <Card className="border-slate-800 bg-slate-900/50">
+    <Card className="border-slate-800 bg-slate-900/50" data-tour="status-card-internet">
       <CardHeader>
         <div className="flex items-start justify-between">
           <div className="space-y-1">

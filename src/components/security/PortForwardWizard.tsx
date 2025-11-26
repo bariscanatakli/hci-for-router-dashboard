@@ -78,7 +78,7 @@ export function PortForwardWizard({ rules, onChange }: PortForwardWizardProps) {
   }, [feedback]);
 
   return (
-    <Card className="border-slate-800 bg-slate-900/50">
+    <Card className="border-slate-800 bg-slate-900/50" data-tour="port-forward-wizard">
       <CardHeader className="flex flex-row items-start justify-between gap-3">
         <div className="space-y-1">
           <CardTitle className="text-base">Port Forwarding</CardTitle>

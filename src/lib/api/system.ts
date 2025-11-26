@@ -1,7 +1,7 @@
 import { SystemStatus } from "../types/system";
 
 // Mock in-memory state for system status
-let mockSystemState: SystemStatus = {
+const mockSystemState: SystemStatus = {
   firmwareVersion: "v2.4.1",
   uptimeSeconds: 432000, // 5 days
   health: "good",
@@ -71,4 +71,3 @@ export async function installUpdate(): Promise<boolean> {
   
   return true;
 }
-

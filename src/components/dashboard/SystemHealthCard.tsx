@@ -10,6 +10,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { formatUptime, formatUptimeLong } from "@/lib/utils";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export function SystemHealthCard() {
   const systemHealth = {
@@ -97,9 +99,18 @@ export function SystemHealthCard() {
           </div>
           <div className="space-y-1">
             <div className="text-xs text-slate-400">Uptime</div>
-            <div className="text-sm font-medium text-slate-100">
-              {systemHealth.uptime}
-            </div>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="font-medium text-slate-200 cursor-help">
+                    {formatUptime(systemHealth.uptime)}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{formatUptimeLong(systemHealth.uptime)}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </div>
 

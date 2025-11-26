@@ -6,17 +6,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
+import { formatUptimeLong } from "@/lib/utils";
 
 interface RebootCardProps {
   onReboot?: () => void;
   onRestartModem?: () => void;
 }
 
+const REBOOT_DURATION_SECONDS = 10;
+
 export function RebootCard({ onReboot, onRestartModem }: RebootCardProps) {
   const [confirm, setConfirm] = useState<"router" | "modem" | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [rebooting, setRebooting] = useState(false);
   const [countdown, setCountdown] = useState(0);
+  const [uptimeSeconds, setUptimeSeconds] = useState(432000); // Mock: 5 days
 
   useEffect(() => {
     if (!feedback || rebooting) return;
@@ -31,10 +35,18 @@ export function RebootCard({ onReboot, onRestartModem }: RebootCardProps) {
     return () => clearTimeout(timer);
   }, [rebooting, countdown]);
 
+  // Uptime counter
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setUptimeSeconds((prev) => prev + 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   const handleAction = (type: "router" | "modem") => {
     setConfirm(null);
     setRebooting(true);
-    setCountdown(60);
+    setCountdown(REBOOT_DURATION_SECONDS);
     setFeedback(type === "router" ? "Rebooting router..." : "Restarting modem...");
     
     // Simulate reboot process
@@ -44,11 +56,11 @@ export function RebootCard({ onReboot, onRestartModem }: RebootCardProps) {
       setRebooting(false);
       setCountdown(0);
       setFeedback(type === "router" ? "Router reboot completed!" : "Modem restart completed!");
-    }, 10000); // 10 second simulation
+    }, REBOOT_DURATION_SECONDS * 1000);
   };
 
   return (
-    <Card className="border-slate-800 bg-slate-900/50">
+    <Card className="border-slate-800 bg-slate-900/50" data-tour="reboot-card">
       <CardHeader>
         <CardTitle className="text-base">Reboot & recovery</CardTitle>
         <CardDescription className="text-xs">
@@ -57,7 +69,7 @@ export function RebootCard({ onReboot, onRestartModem }: RebootCardProps) {
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="flex flex-col gap-2 rounded-md border border-slate-800 bg-slate-950/70 p-3 text-sm text-slate-300">
-          <span>Estimated downtime: &lt; 60 seconds.</span>
+          <span>Estimated downtime: ~{REBOOT_DURATION_SECONDS} seconds.</span>
           <span className="text-xs text-slate-500">
             Runs a graceful shutdown; sessions may briefly disconnect.
           </span>
@@ -93,7 +105,7 @@ export function RebootCard({ onReboot, onRestartModem }: RebootCardProps) {
             <div className="h-2 overflow-hidden rounded-full bg-slate-800">
               <div
                 className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-1000"
-                style={{ width: `${((60 - countdown) / 60) * 100}%` }}
+                style={{ width: `${((REBOOT_DURATION_SECONDS - countdown) / REBOOT_DURATION_SECONDS) * 100}%` }}
               />
             </div>
             <p className="text-xs text-slate-400">
@@ -106,6 +118,14 @@ export function RebootCard({ onReboot, onRestartModem }: RebootCardProps) {
             {feedback}
           </div>
         )}
+        <div className="mt-4 text-center">
+          <span className="text-xs text-slate-500">Uptime:</span>
+          <div className="text-lg">
+            <span className="font-medium text-emerald-400">
+              {formatUptimeLong(uptimeSeconds)}
+            </span>
+          </div>
+        </div>
       </CardContent>
 
       <Dialog open={!!confirm} onOpenChange={(open) => !open && setConfirm(null)}>
@@ -121,7 +141,7 @@ export function RebootCard({ onReboot, onRestartModem }: RebootCardProps) {
           <div className="space-y-3 rounded-md border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm">
             <div className="flex items-center justify-between">
               <span>Estimated downtime</span>
-              <span className="font-semibold text-slate-100">&lt; 60s</span>
+              <span className="font-semibold text-slate-100">~{REBOOT_DURATION_SECONDS}s</span>
             </div>
             <Separator className="bg-slate-800" />
             <p className="text-xs text-slate-400">
