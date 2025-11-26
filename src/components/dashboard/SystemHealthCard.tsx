@@ -10,14 +10,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { formatUptime, formatUptimeLong } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export function SystemHealthCard() {
   const systemHealth = {
     overall: "good" as const,
     firmwareVersion: "v2.4.1",
-    uptime: "12d 4h",
+    uptimeSeconds: 1036800, // 12 days in seconds
     metrics: [
       { label: "CPU Usage", value: 32, unit: "%", icon: Cpu, color: "blue" },
       {
@@ -64,6 +63,21 @@ export function SystemHealthCard() {
     }
   };
 
+  const formatUptime = (seconds: number) => {
+    const days = Math.floor(seconds / 86400);
+    const hours = Math.floor((seconds % 86400) / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    return `${days}d ${hours}h ${minutes}m`;
+  };
+
+  const formatUptimeLong = (seconds: number) => {
+    const days = Math.floor(seconds / 86400);
+    const hours = Math.floor((seconds % 86400) / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secondsLeft = seconds % 60;
+    return `${days}d ${hours}h ${minutes}m ${secondsLeft}s`;
+  };
+
   return (
     <Card className="border-slate-800 bg-slate-900/50">
       <CardHeader>
@@ -103,11 +117,11 @@ export function SystemHealthCard() {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span className="font-medium text-slate-200 cursor-help">
-                    {formatUptime(systemHealth.uptime)}
+                    {formatUptime(systemHealth.uptimeSeconds)}
                   </span>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>{formatUptimeLong(systemHealth.uptime)}</p>
+                  <p>{formatUptimeLong(systemHealth.uptimeSeconds)}</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -146,6 +160,7 @@ export function SystemHealthCard() {
         </div>
         {systemHealth.alerts.length > 0 && (
           <div className="rounded-md border border-amber-800/50 bg-amber-950/30 px-3 py-2 text-xs text-amber-100">
+            {systemHealth.alerts[0]} — <a href="/system" className="underline underline-offset-2">Open System</a>
             {systemHealth.alerts[0]} — <a href="/system" className="underline underline-offset-2">Open System</a>
           </div>
         )}
