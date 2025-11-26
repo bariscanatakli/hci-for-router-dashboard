@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Cpu, HardDrive, Server, Thermometer } from "lucide-react";
+import { Cpu, HardDrive, Server, Thermometer, AlertTriangle } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -158,10 +158,16 @@ export function SystemHealthCard() {
             );
           })}
         </div>
-        {systemHealth.alerts.length > 0 && (
-          <div className="rounded-md border border-amber-800/50 bg-amber-950/30 px-3 py-2 text-xs text-amber-100">
-            {systemHealth.alerts[0]} — <a href="/system" className="underline underline-offset-2">Open System</a>
-            {systemHealth.alerts[0]} — <a href="/system" className="underline underline-offset-2">Open System</a>
+        {/* S3/S8: Show all alerts in a single consolidated line */}
+        {systemHealth.alerts && systemHealth.alerts.length > 0 && (
+          <div className="mt-3 flex items-start gap-2 rounded-lg border border-amber-800/40 bg-amber-950/20 px-3 py-2">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
+            <p className="text-xs text-amber-200">
+              {systemHealth.alerts.length === 1 
+                ? systemHealth.alerts[0]
+                : `${systemHealth.alerts.length} warnings: ${systemHealth.alerts.join(" • ")}`
+              }
+            </p>
           </div>
         )}
       </CardContent>

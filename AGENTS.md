@@ -110,7 +110,12 @@ Sorumluluklar:
 
 Aktif bulgular (çözülecek sırada):
 
-Şu an açık bulgu yok (son döngüde 3 madde ele alındı: Auto-updates geri bildirimi, Wi‑Fi kartı durumu, mobil nav erişimi). Yeni bulgular için Review aşamasına dön.
+- [ ] S3: GuidedTour highlight kutusu geniş/büyük hedeflerde ortalanmadığı için hedefin sadece sol üstü parlıyor; highlight dikdörtgenini hedefin merkezine oturtacak şekilde yeniden hesapla. (src/components/auth/GuidedTour.tsx)
+- [ ] S7/S3: GuidedTour açıkken arka plan etkileşimleri ve scroll tamamen açık kalıyor (pointer-events-none, focus trap yok); tur modunda sayfayı inert hâle getir, odağı bubble içinde kilitle ve kapatınca önceki odağı geri ver. (src/components/auth/GuidedTour.tsx)
+- [ ] S2/S3: Performance grafikleri (BandwidthChart, LatencyChart) sadece mouse hover ile değer gösteriyor, barlar odaklanabilir değil; klavye erişilebilirliği için tabIndex/onFocus, ok tuşlarıyla gezinme ve aria-live özetleri ekle. (src/components/performance/BandwidthChart.tsx, src/components/performance/LatencyChart.tsx)
+- [ ] S3/S4: Wi‑Fi sayfasında (basic + expert) kaydetme/geri alma işlemleri için daha güçlü geri bildirim (saving, success, error) ve inline status chip ekle.
+- [ ] S3/S4: Security save akışı için “Saving…” göstergesi ve son kaydetme zamanı çipi ekle; hata durumunda belirgin uyarı göster.
+- [ ] S3: PortForwardWizard ve Devices tablo boş/edge state’lerine CTA + yönlendirici metin ekle (örn. ilk kural ekle, filtreleri temizle).
 
 Topbar / Navbar TODO’ları (Shneiderman odaklı):
 - [ ] Bildirim menüsü (S3 geri bildirim) — mock feed + durum ikonları

@@ -9,21 +9,24 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { SecurityProfile, PortForwardRule } from "@/lib/types/security";
 import { cn } from "@/lib/utils";
-import { setAutoUpdateEnabled, useSettingsState } from "@/store/settingsStore";
+import { setAutoUpdateEnabled, toggleMode, useSettingsState } from "@/store/settingsStore";
 import { fetchSecurityProfile, updateSecurityProfile } from "@/lib/api/security";
+import { useFeedback, StatusChip } from "@/components/ui/feedback";
 
 export default function SecurityPage() {
   const [profile, setProfile] = useState<SecurityProfile | null>(null);
   const [savedProfile, setSavedProfile] = useState<SecurityProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { autoUpdateEnabled } = useSettingsState();
+  const { autoUpdateEnabled, mode } = useSettingsState();
   const [feedback, setFeedback] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const savedProfileRef = useRef<SecurityProfile | null>(null);
   const [lastAttempt, setLastAttempt] = useState<number | null>(null);
   const [retryIn, setRetryIn] = useState<number | null>(null);
+  const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
+  const { notify } = useFeedback();
 
   // Fetch security profile on mount
   const loadProfile = useCallback(async () => {
@@ -88,9 +91,12 @@ export default function SecurityPage() {
     if (success) {
       setSavedProfile(profile);
       setFeedback("Security settings saved successfully.");
+      setLastSavedAt(Date.now());
+      notify({ title: "Security saved", description: "Settings updated", tone: "success" });
       setTimeout(() => setFeedback(null), 2200);
     } else {
       setSaveError("Failed to save security settings. Retry.");
+      notify({ title: "Save failed", description: "Security settings not saved", tone: "warning" });
       setFeedback(null);
     }
   };
@@ -199,6 +205,17 @@ export default function SecurityPage() {
         </div>
       </header>
 
+      <div className="mb-2 flex flex-wrap items-center gap-2 text-xs text-slate-400">
+        {saving ? (
+          <StatusChip tone="info">Saving…</StatusChip>
+        ) : lastSavedAt ? (
+          <StatusChip tone="success">Saved {new Date(lastSavedAt).toLocaleTimeString()}</StatusChip>
+        ) : (
+          <StatusChip tone="info">No recent saves</StatusChip>
+        )}
+        {saveError && <span className="text-amber-200">{saveError}</span>}
+      </div>
+
       {hasChanges && (
         <div className="flex flex-col gap-2 rounded-md border border-indigo-800 bg-indigo-950/30 px-3 py-3 text-sm text-indigo-100 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-col">
@@ -257,10 +274,112 @@ export default function SecurityPage() {
             onToggleIps={(enabled) => setProfile((p) => p ? { ...p, intrusionPreventionEnabled: enabled } : null)}
           />
 
-          <PortForwardWizard
-            rules={profile.portForwards}
-            onChange={(rules: PortForwardRule[]) => setProfile((p) => p ? { ...p, portForwards: rules } : null)}
-          />
+          {mode === "expert" && (
+            <Card className="border-slate-800 bg-slate-900/60" data-tour="security-expert">
+              <CardHeader className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                <div className="space-y-1">
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <Activity className="h-4 w-4 text-indigo-400" />
+                    Expert security controls
+                  </CardTitle>
+                  <CardDescription className="text-xs">
+                    Tune IDS/IPS, geo/IP blocking and export rules.
+                  </CardDescription>
+                </div>
+                <StatusChip tone="info">Expert</StatusChip>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center justify-between rounded-md border border-slate-800 bg-slate-950/50 px-3 py-2">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-200">IPS sensitivity</p>
+                    <p className="text-[11px] text-slate-500">Higher catches more threats but may false-positive.</p>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-slate-800 text-slate-200"
+                      onClick={() => notify({ title: "IPS set to Strict", tone: "info" })}
+                    >
+                      Strict
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-slate-800 text-slate-200"
+                      onClick={() => notify({ title: "IPS set to Balanced", tone: "info" })}
+                    >
+                      Balanced
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-slate-800 text-slate-200"
+                      onClick={() => notify({ title: "IPS set to Relaxed", tone: "info" })}
+                    >
+                      Relaxed
+                    </Button>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between rounded-md border border-slate-800 bg-slate-950/50 px-3 py-2">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-200">Geo/IP blocking</p>
+                    <p className="text-[11px] text-slate-500">Block high-risk regions or known bad IP lists.</p>
+                  </div>
+                  <Button
+                    size="sm"
+                    className="bg-indigo-500 text-white hover:bg-indigo-600"
+                    onClick={() => notify({ title: "Geo/IP blocking updated", tone: "success" })}
+                  >
+                    Update list
+                  </Button>
+                </div>
+                <div className="flex items-center justify-between rounded-md border border-slate-800 bg-slate-950/50 px-3 py-2">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-200">Export ruleset</p>
+                    <p className="text-[11px] text-slate-500">Download JSON backup of current firewall rules.</p>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="border-slate-800 text-slate-200"
+                    onClick={() => notify({ title: "Ruleset exported", tone: "success" })}
+                  >
+                    Export
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {mode === "expert" ? (
+            <PortForwardWizard
+              rules={profile.portForwards}
+              onChange={(rules: PortForwardRule[]) => setProfile((p) => p ? { ...p, portForwards: rules } : null)}
+            />
+          ) : (
+            <Card className="border-slate-800 bg-slate-900/60">
+              <CardHeader className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                <div className="space-y-1">
+                  <CardTitle className="text-base">Advanced controls hidden</CardTitle>
+                  <CardDescription className="text-xs">
+                    Port forwarding and deep firewall options are available in Expert mode.
+                  </CardDescription>
+                </div>
+                <Button
+                  size="sm"
+                  className="bg-indigo-500 text-white hover:bg-indigo-600"
+                  onClick={() => toggleMode()}
+                >
+                  Switch to Expert
+                </Button>
+              </CardHeader>
+              <CardContent className="text-sm text-slate-300">
+                Stay in Basic mode to prevent risky configuration changes. Toggle to Expert to add port forwards and
+                expose services intentionally.
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         <div className="space-y-4">

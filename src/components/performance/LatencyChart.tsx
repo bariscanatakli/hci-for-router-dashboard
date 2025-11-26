@@ -27,6 +27,7 @@ export function LatencyChart({ samples, targetMs = 30, timeRangeLabel }: Latency
 
   const firstTime = latencySeries[0] ? formatTime(latencySeries[0].timestamp) : "";
   const lastTime = latencySeries[latencySeries.length - 1] ? formatTime(latencySeries[latencySeries.length - 1].timestamp) : "";
+  const [focusedIdx, setFocusedIdx] = React.useState<number | null>(null);
 
   return (
     <Card className="border-slate-800 bg-slate-900/50">
@@ -56,6 +57,19 @@ export function LatencyChart({ samples, targetMs = 30, timeRangeLabel }: Latency
                   <div
                     className="w-full rounded-t-md bg-gradient-to-t from-slate-700 to-indigo-500"
                     style={{ height: `${height}%`, opacity: overTarget ? 0.9 : 0.7, boxShadow: overTarget ? "0 0 0 1px rgba(248,113,113,0.3)" : undefined }}
+                    tabIndex={0}
+                    onFocus={() => setFocusedIdx(idx)}
+                    onBlur={() => setFocusedIdx((current) => (current === idx ? null : current))}
+                    onKeyDown={(event) => {
+                      if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+                      event.preventDefault();
+                      const nextIdx = event.key === "ArrowRight" ? Math.min(latencySeries.length - 1, idx + 1) : Math.max(0, idx - 1);
+                      setFocusedIdx(nextIdx);
+                      const parent = event.currentTarget.parentElement?.parentElement;
+                      const nextEl = parent?.querySelectorAll<HTMLElement>("[data-latency-bar]")[nextIdx];
+                      nextEl?.focus();
+                    }}
+                    data-latency-bar
                     aria-label={`Latency sample ${idx + 1}: ${sample.value} ms at ${formatTime(sample.timestamp)}`}
                     title={`${formatTime(sample.timestamp)} · ${sample.value} ms`}
                   />
@@ -76,6 +90,11 @@ export function LatencyChart({ samples, targetMs = 30, timeRangeLabel }: Latency
             const avg = avgIntervalMinutes();
             return avg ? ` Samples ~${avg} min apart.` : "";
           })()}
+        </div>
+        <div className="sr-only" role="status" aria-live="polite">
+          {focusedIdx !== null
+            ? `Latency sample ${focusedIdx + 1}: ${latencySeries[focusedIdx].value} ms at ${formatTime(latencySeries[focusedIdx].timestamp)}`
+            : `Latency chart with ${latencySeries.length} samples from ${firstTime} to ${lastTime}`}
         </div>
       </CardContent>
     </Card>

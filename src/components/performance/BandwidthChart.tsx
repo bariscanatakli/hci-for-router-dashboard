@@ -43,6 +43,15 @@ export function BandwidthChart({ samples, timeRangeLabel }: BandwidthChartProps)
     const range = max - min || 1;
     const firstTime = formatTime(series[0].timestamp);
     const lastTime = formatTime(series[series.length - 1].timestamp);
+    const handleKeyNav = (event: React.KeyboardEvent<HTMLDivElement>, idx: number) => {
+      if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") return;
+      event.preventDefault();
+      const nextIdx = event.key === "ArrowRight" ? Math.min(series.length - 1, idx + 1) : Math.max(0, idx - 1);
+      setHovered({ value: series[nextIdx].value, idx: nextIdx, timestamp: series[nextIdx].timestamp });
+      const parent = event.currentTarget.parentElement;
+      const nextEl = parent?.children[nextIdx] as HTMLElement | undefined;
+      nextEl?.focus();
+    };
     return (
       <div className="relative">
         <div className="absolute -left-2 top-0 text-[10px] text-slate-500">{Math.round(max)}</div>
@@ -63,6 +72,10 @@ export function BandwidthChart({ samples, timeRangeLabel }: BandwidthChartProps)
                 }}
                 onMouseEnter={() => setHovered({ value: sample.value, idx, timestamp: sample.timestamp })}
                 onMouseLeave={() => setHovered(null)}
+                onFocus={() => setHovered({ value: sample.value, idx, timestamp: sample.timestamp })}
+                onBlur={() => setHovered(null)}
+                onKeyDown={(e) => handleKeyNav(e, idx)}
+                tabIndex={0}
                 role="img"
                 aria-label={`${label} sample ${idx + 1}: ${sample.value} Mbps at ${formatTime(sample.timestamp)}`}
                 title={`${formatTime(sample.timestamp)} · ${sample.value} Mbps`}
@@ -82,6 +95,11 @@ export function BandwidthChart({ samples, timeRangeLabel }: BandwidthChartProps)
             {hovered.value} Mbps · {formatTime(hovered.timestamp)}
           </div>
         )}
+        <div className="sr-only" role="status" aria-live="polite">
+          {hovered
+            ? `${label} sample ${hovered.idx + 1}: ${hovered.value} Mbps at ${formatTime(hovered.timestamp)}`
+            : `${label} chart with ${series.length} bars from ${firstTime} to ${lastTime}`}
+        </div>
       </div>
     );
   };

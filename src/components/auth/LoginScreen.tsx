@@ -14,6 +14,7 @@ export function LoginScreen() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const canSubmit = useMemo(() => username.trim().length >= 3 && password.trim().length >= 4, [username, password]);
 
@@ -60,14 +61,25 @@ export function LoginScreen() {
             </div>
             <div className="space-y-2">
               <label className="text-sm text-slate-300">Password</label>
-              <Input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                autoComplete="current-password"
-                className="bg-slate-950/70"
-              />
+              <div className="flex items-center gap-2">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  autoComplete="current-password"
+                  className="bg-slate-950/70"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="text-xs text-slate-200"
+                  onClick={() => setShowPassword((v) => !v)}
+                >
+                  {showPassword ? "Hide" : "Show"}
+                </Button>
+              </div>
             </div>
             <div className="flex items-center justify-between text-xs text-slate-400">
               <span className="flex items-center gap-1">

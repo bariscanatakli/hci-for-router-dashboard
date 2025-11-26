@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { WifiConfig, WifiStatus } from "@/lib/types/wifi";
+import { useSettingsState } from "@/store/settingsStore";
+import { useFeedback } from "@/components/ui/feedback";
 
 const mockConfig: WifiConfig = {
   ssid: "HomeNetwork",
@@ -46,6 +48,16 @@ export default function WifiPage() {
   const [pendingStatus, setPendingStatus] = useState<WifiStatus | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [showDevices, setShowDevices] = useState(false);
+  const [showBasicPassword, setShowBasicPassword] = useState(false);
+  const [savingBasic, setSavingBasic] = useState(false);
+  const [advancedSettings, setAdvancedSettings] = useState({
+    transmitPower: 75,
+    dfsChannels: true,
+    macFiltering: false,
+    bandSteering: true,
+  });
+  const { mode } = useSettingsState();
+  const { notify } = useFeedback();
 
   const effectiveStatus = pendingStatus ?? status;
 
@@ -159,7 +171,185 @@ export default function WifiPage() {
 
       <section className="grid gap-4 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-4">
-          <WifiForm config={config} onChange={setConfig} disabled={!effectiveStatus.enabled} />
+          {mode === "basic" ? (
+            <Card className="border-slate-800 bg-slate-900/50" data-hci="wifi-basic-form">
+              <CardHeader className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                <div className="space-y-1">
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <Wifi className="h-4 w-4 text-indigo-400" />
+                    Basic Wi-Fi setup
+                  </CardTitle>
+                  <CardDescription className="text-xs">
+                    Update home network name and password. Advanced controls are available in Expert mode.
+                  </CardDescription>
+                </div>
+                <span className="text-[11px] uppercase tracking-wide text-indigo-200">Basic mode</span>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-slate-400">Network Name (SSID)</label>
+                    <input
+                      value={config.ssid}
+                      onChange={(e) => setConfig((c) => ({ ...c, ssid: e.target.value }))}
+                      placeholder="HomeNetwork"
+                      className="w-full rounded-md border border-slate-800 bg-slate-950/70 px-3 py-2 text-sm text-slate-100"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-slate-400">Password</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type={showBasicPassword ? "text" : "password"}
+                        value={config.password}
+                        onChange={(e) => setConfig((c) => ({ ...c, password: e.target.value }))}
+                        placeholder="••••••••"
+                        className="w-full rounded-md border border-slate-800 bg-slate-950/70 px-3 py-2 text-sm text-slate-100"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="min-w-[88px] border-slate-800 text-xs text-slate-200"
+                        onClick={() => setShowBasicPassword((v) => !v)}
+                      >
+                        {showBasicPassword ? "Hide" : "Show"}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-slate-200"
+                    onClick={() => {
+                      setConfig(mockConfig);
+                      setNotice("Reverted to mock defaults.");
+                      setTimeout(() => setNotice(null), 1800);
+                    }}
+                  >
+                    Reset
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="bg-indigo-500 text-white hover:bg-indigo-600"
+                    onClick={() => {
+                      setSavingBasic(true);
+                      setStatus((s) => ({ ...s, enabled: true }));
+                      setNotice("Saving Wi-Fi settings…");
+                      setTimeout(() => {
+                        setSavingBasic(false);
+                        setNotice("Wi-Fi settings saved (mock).");
+                        setTimeout(() => setNotice(null), 2000);
+                      }, 600);
+                    }}
+                    disabled={savingBasic}
+                  >
+                    {savingBasic ? "Saving…" : "Save basic settings"}
+                  </Button>
+                </div>
+                {notice && (
+                  <div
+                    className="rounded-md border border-slate-800 bg-slate-950/70 px-3 py-2 text-xs text-slate-200"
+                    role="status"
+                    aria-live="polite"
+                  >
+                    {notice}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ) : (
+            <WifiForm config={config} onChange={setConfig} disabled={!effectiveStatus.enabled} />
+          )}
+
+          {mode === "expert" && (
+            <Card className="border-slate-800 bg-slate-900/60" data-tour="wifi-advanced">
+              <CardHeader className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                <div className="space-y-1">
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <Activity className="h-4 w-4 text-indigo-400" />
+                    Advanced Wi-Fi controls
+                  </CardTitle>
+                  <CardDescription className="text-xs">
+                    Power, DFS, MAC filtering and band steering. Expert mode only.
+                  </CardDescription>
+                </div>
+                <span className="text-[11px] uppercase tracking-wide text-indigo-200">Expert</span>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-xs text-slate-400">
+                      <span>Transmit power</span>
+                      <span className="font-semibold text-slate-100">{advancedSettings.transmitPower}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={10}
+                      max={100}
+                      step={5}
+                      value={advancedSettings.transmitPower}
+                      onChange={(e) =>
+                        setAdvancedSettings((s) => ({ ...s, transmitPower: Number(e.target.value) }))
+                      }
+                      className="w-full accent-indigo-400"
+                    />
+                    <p className="text-[11px] text-slate-500">Lower power to reduce bleed into neighbor areas.</p>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="text-xs text-slate-400">DFS channels</div>
+                      <Switch
+                        checked={advancedSettings.dfsChannels}
+                        onCheckedChange={(checked) =>
+                          setAdvancedSettings((s) => ({ ...s, dfsChannels: checked }))
+                        }
+                      />
+                    </div>
+                    <p className="text-[11px] text-slate-500">
+                      Enable radar-avoid channels for less interference (may cause occasional channel shifts).
+                    </p>
+                  </div>
+                </div>
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div className="flex items-center justify-between rounded-md border border-slate-800 bg-slate-950/50 px-3 py-2">
+                    <div className="space-y-0.5">
+                      <div className="text-xs font-semibold text-slate-200">MAC filtering</div>
+                      <div className="text-[11px] text-slate-500">Block/allow by MAC list (config pending)</div>
+                    </div>
+                    <Switch
+                      checked={advancedSettings.macFiltering}
+                      onCheckedChange={(checked) =>
+                        setAdvancedSettings((s) => ({ ...s, macFiltering: checked }))
+                      }
+                    />
+                  </div>
+                  <div className="flex items-center justify-between rounded-md border border-slate-800 bg-slate-950/50 px-3 py-2">
+                    <div className="space-y-0.5">
+                      <div className="text-xs font-semibold text-slate-200">Band steering</div>
+                      <div className="text-[11px] text-slate-500">Auto-push clients to 5/6 GHz when possible</div>
+                    </div>
+                    <Switch
+                      checked={advancedSettings.bandSteering}
+                      onCheckedChange={(checked) =>
+                        setAdvancedSettings((s) => ({ ...s, bandSteering: checked }))
+                      }
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-end">
+                  <Button
+                    size="sm"
+                    className="bg-indigo-500 text-white hover:bg-indigo-600"
+                    onClick={() => notify({ title: "Advanced Wi-Fi saved", description: "Mock update applied", tone: "success" })}
+                  >
+                    Save advanced controls
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <Card className="border-slate-800 bg-slate-900/50">
             <CardHeader className="flex flex-row items-start justify-between gap-3">
@@ -191,19 +381,23 @@ export default function WifiPage() {
         </div>
 
         <div className="space-y-4">
-          <GuestWifiToggle
-            enabled={effectiveStatus.enabled && effectiveStatus.guestEnabled}
-            guestSsid={config.guestSsid}
-            guestPassword={config.guestPassword}
-            onToggle={(enabled) => {
-              setPendingStatus((s) => ({ ...(s ?? effectiveStatus), guestEnabled: enabled }));
-              setConfig((c) => ({ ...c, guestEnabled: enabled }));
-            }}
-            onUpdateCredentials={(ssid, password) =>
-              setConfig((c) => ({ ...c, guestSsid: ssid, guestPassword: password }))
-            }
-            onRegenerate={regenerateGuest}
-          />
+          {mode === "expert" && (
+            <GuestWifiToggle
+              enabled={effectiveStatus.enabled && effectiveStatus.guestEnabled}
+              guestSsid={config.guestSsid}
+              guestPassword={config.guestPassword}
+              onToggle={(enabled) => {
+                setPendingStatus((s) => ({ ...(s ?? effectiveStatus), guestEnabled: enabled }));
+                setConfig((c) => ({ ...c, guestEnabled: enabled }));
+              }}
+              onUpdateCredentials={(ssid, password) =>
+                setConfig((c) => ({ ...c, guestSsid: ssid, guestPassword: password }))
+              }
+              onRegenerate={() => {
+                regenerateGuest();
+              }}
+            />
+          )}
 
           <Card className="border-slate-800 bg-slate-900/50">
             <CardHeader className="space-y-1">

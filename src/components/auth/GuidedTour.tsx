@@ -222,10 +222,13 @@ export function GuidedTour({ onComplete }: { onComplete: () => void }) {
   const [isNavigating, setIsNavigating] = useState(false);
   const [isReady, setIsReady] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+  const [isAutoScrolling, setIsAutoScrolling] = useState(false);
   const [highlightRect, setHighlightRect] = useState<HighlightRect | null>(null);
   const bubbleRef = useRef<HTMLDivElement | null>(null);
   const measureTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const readyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+  const lastPageIndexRef = useRef<Record<string, number>>({});
 
   const steps = allTourSteps;
   const step = steps[globalIndex];
@@ -235,10 +238,13 @@ export function GuidedTour({ onComplete }: { onComplete: () => void }) {
     // When pathname changes, check if we need to update index
     const currentStepPage = step?.page;
     if (currentStepPage && currentStepPage !== pathname && !isNavigating) {
-      // User navigated manually or we're syncing after navigation
+      // User navigated manually; restore last seen step on that page if exists, else first step
+      const lastIndexForPage = lastPageIndexRef.current[pathname];
       const pageFirstIndex = steps.findIndex((s) => s.page === pathname);
-      if (pageFirstIndex >= 0 && pageFirstIndex !== globalIndex) {
-        setGlobalIndex(pageFirstIndex);
+      const targetIndex =
+        typeof lastIndexForPage === "number" ? lastIndexForPage : pageFirstIndex;
+      if (targetIndex >= 0 && targetIndex !== globalIndex) {
+        setGlobalIndex(targetIndex);
       }
     }
     setIsNavigating(false);
@@ -287,13 +293,11 @@ export function GuidedTour({ onComplete }: { onComplete: () => void }) {
     const gap = 24;
     const highlightPadding = 8;
 
-    // Check if this is a sidebar/left-aligned element (don't scroll for these)
-    const isLeftElement = rect.left < viewportWidth * 0.3;
     const isFixedElement = window.getComputedStyle(target).position === 'fixed';
 
     // S3: Auto-scroll to make target visible with smart positioning
-    // Don't scroll for fixed elements or sidebar items
-    if (!isLeftElement && !isFixedElement) {
+    // Don't scroll for fixed elements
+    if (!isFixedElement) {
       const scrollMargin = 100; // Extra space around element
       const elementTop = rect.top + window.scrollY;
       const elementBottom = rect.bottom + window.scrollY;
@@ -306,6 +310,7 @@ export function GuidedTour({ onComplete }: { onComplete: () => void }) {
       const isPartiallyHidden = isAboveViewport || isBelowViewport;
 
       if (isPartiallyHidden) {
+        setIsAutoScrolling(true);
         // Calculate optimal scroll position
         // Center the element in the viewport, accounting for bubble space
         const elementCenter = elementTop + (rect.height / 2);
@@ -315,17 +320,18 @@ export function GuidedTour({ onComplete }: { onComplete: () => void }) {
         const maxScroll = document.documentElement.scrollHeight - viewportHeight;
         const targetScroll = Math.max(0, Math.min(optimalScrollY, maxScroll));
 
-        // Smooth scroll to target
+        // Scroll instantly to reduce animation jitter between scroll and bubble transitions
         window.scrollTo({
           top: targetScroll,
-          behavior: 'smooth'
+          behavior: 'auto'
         });
 
         // Re-measure after scroll completes
-        setTimeout(() => {
+        requestAnimationFrame(() => {
           const newRect = target.getBoundingClientRect();
           updateHighlightAndPosition(newRect, target);
-        }, 400);
+          setIsAutoScrolling(false);
+        });
 
         return true;
       }
@@ -336,16 +342,19 @@ export function GuidedTour({ onComplete }: { onComplete: () => void }) {
     return true;
 
     function updateHighlightAndPosition(rect: DOMRect, target: HTMLElement) {
-      // Limit highlight rect to reasonable size to prevent full-page highlights
-      const maxHighlightWidth = Math.min(rect.width, viewportWidth * 0.6);
-      const maxHighlightHeight = Math.min(rect.height, viewportHeight * 0.7);
+      // S3: Center highlight on target element, clamp to viewport to avoid left/top bias
+      const maxHighlightWidth = Math.min(rect.width + highlightPadding * 2, viewportWidth * 0.7);
+      const maxHighlightHeight = Math.min(rect.height + highlightPadding * 2, viewportHeight * 0.75);
+      const centeredLeft = rect.left + rect.width / 2 - maxHighlightWidth / 2;
+      const centeredTop = rect.top + rect.height / 2 - maxHighlightHeight / 2;
+      const clampedLeft = Math.max(highlightPadding, Math.min(centeredLeft, viewportWidth - maxHighlightWidth - highlightPadding));
+      const clampedTop = Math.max(highlightPadding, Math.min(centeredTop, viewportHeight - maxHighlightHeight - highlightPadding));
 
-      // Set highlight rectangle with padding and size limits
       setHighlightRect({
-        top: rect.top - highlightPadding,
-        left: rect.left - highlightPadding,
-        width: maxHighlightWidth + highlightPadding * 2,
-        height: maxHighlightHeight + highlightPadding * 2,
+        top: clampedTop,
+        left: clampedLeft,
+        width: maxHighlightWidth,
+        height: maxHighlightHeight,
       });
 
       // S1: Consistent positioning logic
@@ -428,6 +437,13 @@ export function GuidedTour({ onComplete }: { onComplete: () => void }) {
       clearTimeout(readyTimeoutRef.current);
     }
 
+    // Lock background scroll and mark page inert while tour is open
+    const body = document.body;
+    const appRoot = document.querySelector("main");
+    const previousOverflow = body.style.overflow;
+    body.style.overflow = "hidden";
+    appRoot?.setAttribute("aria-hidden", "true");
+
     // Wait for page content to load
     readyTimeoutRef.current = setTimeout(() => {
       setIsReady(true);
@@ -438,6 +454,8 @@ export function GuidedTour({ onComplete }: { onComplete: () => void }) {
     }, 300);
 
     return () => {
+      body.style.overflow = previousOverflow;
+      appRoot?.removeAttribute("aria-hidden");
       if (readyTimeoutRef.current) {
         clearTimeout(readyTimeoutRef.current);
       }
@@ -502,13 +520,14 @@ export function GuidedTour({ onComplete }: { onComplete: () => void }) {
     setIsVisible(false);
     setTimeout(() => {
       const prevStep = steps[globalIndex - 1];
+      lastPageIndexRef.current[step.page] = globalIndex;
       if (prevStep.page !== pathname) {
         setIsNavigating(true);
         router.push(prevStep.page);
       }
       setGlobalIndex((i) => i - 1);
     }, 150);
-  }, [globalIndex, steps, pathname, router]);
+  }, [globalIndex, steps, pathname, router, step.page]);
 
   // S7: User control - go forward in tour
   const goNext = useCallback(() => {
@@ -521,13 +540,14 @@ export function GuidedTour({ onComplete }: { onComplete: () => void }) {
     setIsVisible(false);
     setTimeout(() => {
       const nextStep = steps[globalIndex + 1];
+      lastPageIndexRef.current[step.page] = globalIndex;
       if (nextStep.page !== pathname) {
         setIsNavigating(true);
         router.push(nextStep.page);
       }
       setGlobalIndex((i) => i + 1);
     }, 150);
-  }, [globalIndex, steps, pathname, router, onComplete]);
+  }, [globalIndex, steps, pathname, router, onComplete, step.page]);
 
   // Keyboard navigation: Arrow keys, Escape
   useEffect(() => {
@@ -547,6 +567,30 @@ export function GuidedTour({ onComplete }: { onComplete: () => void }) {
     return () => window.removeEventListener("keydown", handler);
   }, [goNext, goBack, onComplete]);
 
+  // Trap focus inside the tour bubble and restore previous focus on exit
+  useEffect(() => {
+    if (!isVisible) {
+      if (previousFocusRef.current) {
+        previousFocusRef.current.focus();
+      }
+      return;
+    }
+    previousFocusRef.current = document.activeElement as HTMLElement | null;
+    bubbleRef.current?.focus();
+
+    const trap = (event: FocusEvent) => {
+      if (!bubbleRef.current) return;
+      if (event.target instanceof HTMLElement && bubbleRef.current.contains(event.target)) return;
+      event.stopPropagation();
+      bubbleRef.current.focus();
+    };
+
+    document.addEventListener("focusin", trap);
+    return () => {
+      document.removeEventListener("focusin", trap);
+    };
+  }, [isVisible]);
+
   const isFirst = globalIndex === 0;
   const isLast = globalIndex >= steps.length - 1;
   const currentPageSteps = steps.filter((s) => s.page === pathname);
@@ -561,7 +605,8 @@ export function GuidedTour({ onComplete }: { onComplete: () => void }) {
       {/* S3: Visual feedback - dark overlay with clear cutout for highlighted element */}
       <div
         className={cn(
-          "pointer-events-none fixed inset-0 z-[100] transition-opacity duration-500 ease-out",
+          "pointer-events-auto fixed inset-0 z-[100]",
+          isAutoScrolling ? "transition-none" : "transition-opacity duration-500 ease-out",
           isVisible ? "opacity-100" : "opacity-0"
         )}
         aria-hidden="true"
@@ -649,7 +694,7 @@ export function GuidedTour({ onComplete }: { onComplete: () => void }) {
         ref={bubbleRef}
         className={cn(
           "fixed z-[101] w-[380px] max-w-[calc(100vw-40px)]",
-          "transition-all duration-500 ease-out",
+          isAutoScrolling ? "transition-none" : "transition-all duration-500 ease-out",
           isVisible && position
             ? "opacity-100 scale-100"
             : "opacity-0 scale-95 pointer-events-none"

@@ -18,6 +18,8 @@ import {
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { startTour, useAuthState } from "@/store/authStore";
+import { toggleMode, useSettingsState } from "@/store/settingsStore";
+import { useFeedback } from "@/components/ui/feedback";
 
 const navItems = [
   { label: "Dashboard", href: "/dashboard" },
@@ -35,11 +37,11 @@ type SearchItem = {
   tags?: string[];
   source: "nav" | "content" | "custom" | "action";
   action?: () => void;
+  level?: "basic" | "expert";
 };
 
 const shortcutStorageKey = "router-dashboard:shortcuts";
 const historyStorageKey = "router-dashboard:search-history";
-
 export function Topbar() {
   const router = useRouter();
   const auth = useAuthState();
@@ -47,13 +49,14 @@ export function Topbar() {
   const [query, setQuery] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
-  const [toast, setToast] = useState<{ message: string; tone?: "success" | "info" | "warning" } | null>(null);
   const [customShortcuts, setCustomShortcuts] = useState<SearchItem[]>([]);
   const [shortcutDialogOpen, setShortcutDialogOpen] = useState(false);
   const [newShortcut, setNewShortcut] = useState({ label: "", href: "/dashboard" });
   const [shortcutError, setShortcutError] = useState<string | null>(null);
   const [history, setHistory] = useState<SearchItem[]>([]);
   const searchRef = useRef<HTMLInputElement | null>(null);
+  const { mode } = useSettingsState();
+  const { notify } = useFeedback();
 
   const quickActions: SearchItem[] = useMemo(
     () => [
@@ -96,6 +99,7 @@ export function Topbar() {
         source: "action",
         tags: ["reboot", "restart", "modem"],
         action: () => router.push("/system"),
+        level: "expert",
       },
     ],
     [router, launchTour]
@@ -138,6 +142,7 @@ export function Topbar() {
         href: "/security",
         tags: ["firewall", "ips", "level", "threats"],
         source: "content",
+        level: "expert",
       },
       {
         id: "content-security-port-forward",
@@ -145,6 +150,7 @@ export function Topbar() {
         href: "/security",
         tags: ["ports", "forward", "nat", "service"],
         source: "content",
+        level: "expert",
       },
       {
         id: "content-performance-bandwidth",
@@ -230,7 +236,11 @@ export function Topbar() {
   }, [history]);
 
   const searchIndex = useMemo(() => {
-    const merged = [...customShortcuts, ...staticShortcuts, ...quickActions];
+    const merged = [...customShortcuts, ...staticShortcuts, ...quickActions].filter((item) => {
+      if (!item.level) return true;
+      if (item.level === "expert" && mode !== "expert") return false;
+      return true;
+    });
     // De-dupe by href+label combination
     const seen = new Set<string>();
     return merged.filter((item) => {
@@ -239,7 +249,7 @@ export function Topbar() {
       seen.add(key);
       return true;
     });
-  }, [customShortcuts, staticShortcuts, quickActions]);
+  }, [customShortcuts, staticShortcuts, quickActions, mode]);
 
   const suggestions = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -347,14 +357,8 @@ export function Topbar() {
     return () => window.removeEventListener("keydown", handler);
   }, []);
 
-  useEffect(() => {
-    if (!toast) return;
-    const id = setTimeout(() => setToast(null), 2500);
-    return () => clearTimeout(id);
-  }, [toast]);
-
   const triggerToast = (message: string, tone: "success" | "info" | "warning" = "info") =>
-    setToast({ message, tone });
+    notify({ title: message, tone });
 
   const handleStartTour = () => {
     launchTour();
@@ -439,7 +443,7 @@ export function Topbar() {
         <Search className="h-4 w-4 text-slate-500" />
         <div className="flex w-full flex-col gap-1">
           <Input
-            placeholder="Quick search (devices, SSIDs, ports)"
+            placeholder={`Quick search (${mode === "expert" ? "advanced" : "guided"} mode)`}
             value={query}
             onChange={(e) => {
               setQuery(e.target.value);
@@ -669,11 +673,16 @@ export function Topbar() {
           variant="ghost"
           size="sm"
           className="hidden items-center gap-2 rounded-full border border-slate-900 bg-slate-900/70 text-[11px] font-semibold text-indigo-200 hover:bg-slate-900 lg:flex"
-          disabled
-          title="TODO: Add easy/expert mode toggle"
           data-tour="mode-toggle"
+          onClick={() => {
+            const next = mode === "basic" ? "expert" : "basic";
+            toggleMode();
+            triggerToast(`Switched to ${next} mode`, "info");
+          }}
+          aria-pressed={mode === "expert"}
+          aria-label={`Toggle mode, currently ${mode}`}
         >
-          Modes (Easy/Expert) — TODO
+          Mode: {mode === "expert" ? "Expert" : "Basic"}
         </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -772,22 +781,6 @@ export function Topbar() {
         </DialogContent>
       </Dialog>
 
-      {toast && (
-        <div
-          className={cn(
-            "fixed right-4 top-20 z-30 rounded-lg border px-4 py-2 text-sm shadow-lg shadow-slate-950/50",
-            toast.tone === "success"
-              ? "border-emerald-700 bg-emerald-950/70 text-emerald-100"
-              : toast.tone === "warning"
-                ? "border-amber-700 bg-amber-950/70 text-amber-100"
-                : "border-indigo-700 bg-slate-950/80 text-slate-100"
-          )}
-          role="status"
-          aria-live="polite"
-        >
-          {toast.message}
-        </div>
-      )}
     </header>
   );
 }

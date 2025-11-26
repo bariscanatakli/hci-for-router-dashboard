@@ -157,8 +157,16 @@ export function PortForwardWizard({ rules, onChange }: PortForwardWizardProps) {
 
         <div className="space-y-2">
           {rules.length === 0 && (
-            <div className="rounded-md border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-slate-400">
-              No port forwards configured.
+            <div className="flex flex-col gap-2 rounded-md border border-slate-800 bg-slate-950/60 px-3 py-3 text-sm text-slate-300">
+              <span>No port forwards configured.</span>
+              <Button
+                size="sm"
+                className="self-start bg-indigo-500 text-white hover:bg-indigo-600"
+                onClick={addRule}
+                disabled={!canAdd}
+              >
+                Add your first rule
+              </Button>
             </div>
           )}
           {rules.map((rule) => (

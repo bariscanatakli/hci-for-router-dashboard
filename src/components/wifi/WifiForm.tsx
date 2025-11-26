@@ -9,6 +9,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Button } from "@/components/ui/button";
 import { WifiBand, WifiConfig } from "@/lib/types/wifi";
 import { cn } from "@/lib/utils";
+import { useFeedback, StatusChip } from "@/components/ui/feedback";
 
 interface WifiFormProps {
   config: WifiConfig;
@@ -24,6 +25,8 @@ export function WifiForm({ config, onChange, disabled = false }: WifiFormProps) 
   const [status, setStatus] = useState<{ message: string; tone: "success" | "warning" | "info" } | null>(null);
   const [lastSaved, setLastSaved] = useState<WifiConfig>(config);
   const [isDirty, setIsDirty] = useState(false);
+  const { notify } = useFeedback();
+
   const updateField = <K extends keyof WifiConfig>(key: K, value: WifiConfig[K]) => {
     onChange({ ...config, [key]: value });
     setIsDirty(true);
@@ -50,12 +53,14 @@ export function WifiForm({ config, onChange, disabled = false }: WifiFormProps) 
     setLastSaved(config);
     setIsDirty(false);
     setStatus({ message: "Wi-Fi settings saved (mock).", tone: "success" });
+    notify({ title: "Wi-Fi saved", description: "Expert settings updated", tone: "success" });
   };
 
   const handleCancel = () => {
     onChange(lastSaved);
     setIsDirty(false);
     setStatus({ message: "Changes reverted.", tone: "info" });
+    notify({ title: "Changes reverted", description: "Wi-Fi settings restored", tone: "info" });
   };
 
   return (
@@ -70,11 +75,14 @@ export function WifiForm({ config, onChange, disabled = false }: WifiFormProps) 
             Update SSID, security, and radio parameters. Changes save when you click Save; use Cancel to revert.
           </CardDescription>
         </div>
-        <Switch
-          checked={!config.hidden}
-          onCheckedChange={(checked) => updateField("hidden", !checked)}
-          aria-label="Broadcast SSID"
-        />
+        <div className="flex flex-col items-end gap-2">
+          {isDirty ? <StatusChip tone="warning">Unsaved</StatusChip> : <StatusChip tone="success">Saved</StatusChip>}
+          <Switch
+            checked={!config.hidden}
+            onCheckedChange={(checked) => updateField("hidden", !checked)}
+            aria-label="Broadcast SSID"
+          />
+        </div>
       </CardHeader>
       <CardContent className={cn("space-y-4", disabled && "pointer-events-none")}>
         <div className="grid gap-3 md:grid-cols-2">

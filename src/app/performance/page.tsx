@@ -7,6 +7,9 @@ import { LatencyChart } from "@/components/performance/LatencyChart";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { PerformanceSample } from "@/lib/types/performance";
+import { useSettingsState } from "@/store/settingsStore";
+import { Button } from "@/components/ui/button";
+import { useFeedback } from "@/components/ui/feedback";
 
 const mockSamples: PerformanceSample[] = [
   { timestamp: Date.now() - 60000 * 11, downloadMbps: 85, uploadMbps: 18, latencyMs: 24 },
@@ -26,6 +29,8 @@ const mockSamples: PerformanceSample[] = [
 export default function PerformancePage() {
   const [samples] = useState<PerformanceSample[]>(mockSamples);
   const [timeRange] = useState("Last 15 minutes");
+  const { mode } = useSettingsState();
+  const { notify } = useFeedback();
 
   const kpis = useMemo(() => {
     const downloads = samples.map((s) => s.downloadMbps);
@@ -89,6 +94,37 @@ export default function PerformancePage() {
             value="Configure alerts"
             tone="blue"
           />
+          {mode === "expert" && (
+            <Card className="border-slate-800 bg-slate-900/60" data-tour="performance-expert">
+              <CardContent className="space-y-3 p-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <p className="text-xs font-semibold text-slate-200">QoS / Traffic shaping</p>
+                    <p className="text-[11px] text-slate-500">
+                      Prioritize realtime apps; limit background traffic.
+                    </p>
+                  </div>
+                  <Button
+                    size="sm"
+                    className="bg-indigo-500 text-white hover:bg-indigo-600"
+                    onClick={() =>
+                      notify({
+                        title: "QoS profile applied",
+                        description: "Streaming + voice prioritized (mock)",
+                        tone: "success",
+                      })
+                    }
+                  >
+                    Apply profile
+                  </Button>
+                </div>
+                <div className="flex items-center justify-between text-xs text-slate-400">
+                  <span>Current profile</span>
+                  <span className="font-semibold text-slate-100">Balanced</span>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </div>

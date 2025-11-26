@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { NetworkDevice } from "@/lib/types/devices";
 import { cn } from "@/lib/utils";
+import { useFeedback } from "@/components/ui/feedback";
 
 const mockDevices: NetworkDevice[] = [
   {
@@ -70,7 +71,7 @@ export default function DevicesPage() {
   const [selectedDevice, setSelectedDevice] = useState<NetworkDevice | null>(null);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-  const [feedback, setFeedback] = useState<string | null>(null);
+  const { notify } = useFeedback();
 
   const filteredDevices = useMemo(() => {
     return mockDevices.filter((device) => {
@@ -90,8 +91,7 @@ export default function DevicesPage() {
   const offlineCount = totalCount - onlineCount;
 
   const triggerFeedback = (message: string) => {
-    setFeedback(message);
-    setTimeout(() => setFeedback(null), 1800);
+    notify({ title: message, tone: "info" });
   };
 
   return (
@@ -195,15 +195,6 @@ export default function DevicesPage() {
           if (!open) setSelectedDevice(null);
         }}
       />
-      {feedback && (
-        <div
-          className="fixed bottom-6 right-6 z-30 rounded-md border border-slate-800 bg-slate-950/80 px-3 py-2 text-xs text-slate-100 shadow-lg shadow-slate-950/50"
-          role="status"
-          aria-live="polite"
-        >
-          {feedback}
-        </div>
-      )}
     </div>
   );
 }
