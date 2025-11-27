@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import { Plus, RefreshCw, SlidersHorizontal } from "lucide-react";
+import { MonitorSmartphone, Plus, RefreshCw, SlidersHorizontal } from "lucide-react";
 import { DeviceTable } from "@/components/devices/DeviceTable";
 import { DeviceDetailDialog } from "@/components/devices/DeviceDetailDialog";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { NetworkDevice } from "@/lib/types/devices";
 import { cn } from "@/lib/utils";
 import { useFeedback } from "@/components/ui/feedback";
+import { InfoBadge } from "@/components/ui/info-badge";
 
 const mockDevices: NetworkDevice[] = [
   {
@@ -97,13 +98,26 @@ export default function DevicesPage() {
   return (
     <div className="space-y-8" data-tour="page-devices">
       <header className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between" data-tour="devices-header">
-        <div className="space-y-1">
-          <h1 className="text-3xl font-bold tracking-tight text-slate-50" data-tour="devices-heading">
-            Devices
-          </h1>
-          <p className="text-sm text-slate-400">
-            Manage device access, prioritize critical hardware, and monitor usage.
-          </p>
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-500 text-white shadow-lg shadow-indigo-900/40">
+            <MonitorSmartphone className="h-5 w-5" />
+          </div>
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <h1 className="text-3xl font-bold tracking-tight text-slate-50" data-tour="devices-heading">
+                Devices
+              </h1>
+              <InfoBadge
+                content="Filter by status, search by name/IP, and inspect devices with quick actions. All actions are mock."
+                aria-label="Devices info"
+              >
+                i
+              </InfoBadge>
+            </div>
+            <p className="text-sm text-slate-400">
+              Manage device access, prioritize critical hardware, and monitor usage.
+            </p>
+          </div>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button
@@ -186,6 +200,11 @@ export default function DevicesPage() {
         devices={filteredDevices}
         onInspect={(device) => setSelectedDevice(device)}
         summary="Status, usage, and quick actions for connected devices."
+        onClearFilters={() => {
+          setQuery("");
+          setStatusFilter("all");
+          triggerFeedback("Filters reset. Showing all devices.");
+        }}
       />
 
       <DeviceDetailDialog

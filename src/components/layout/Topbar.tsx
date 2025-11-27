@@ -5,7 +5,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Activity, Bell, BookmarkPlus, CheckCircle2, Info, Menu, MousePointer2, Search, Settings, WifiOff } from "lucide-react";
+import { Bell, BookmarkPlus, BookOpen, CheckCircle2, Info, LogOut, Menu, MousePointer2, Search, Settings, User, WifiOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
@@ -17,9 +17,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { startTour, useAuthState } from "@/store/authStore";
+import { logout, startTour, startHCITour, useAuthState } from "@/store/authStore";
 import { toggleMode, useSettingsState } from "@/store/settingsStore";
 import { useFeedback } from "@/components/ui/feedback";
+import { InfoBadge } from "@/components/ui/info-badge";
 
 const navItems = [
   { label: "Dashboard", href: "/dashboard" },
@@ -57,6 +58,10 @@ export function Topbar() {
   const searchRef = useRef<HTMLInputElement | null>(null);
   const { mode } = useSettingsState();
   const { notify } = useFeedback();
+  const openPasswordModal = useCallback(() => {
+    if (typeof window === "undefined") return;
+    window.dispatchEvent(new Event("router-dashboard:open-password-modal"));
+  }, []);
 
   const quickActions: SearchItem[] = useMemo(
     () => [
@@ -108,13 +113,6 @@ export function Topbar() {
   const staticShortcuts: SearchItem[] = useMemo(
     () => [
       ...navItems.map((item) => ({ id: `nav-${item.href}`, label: item.label, href: item.href, source: "nav" as const })),
-      {
-        id: "content-dashboard-overview",
-        label: "Dashboard overview",
-        href: "/dashboard",
-        tags: ["summary", "status", "cards"],
-        source: "content",
-      },
       {
         id: "content-devices-table",
         label: "Devices • table & filters",
@@ -397,7 +395,12 @@ export function Topbar() {
   };
 
   const removeShortcut = (id: string) => {
+    const removed = customShortcuts.find((item) => item.id === id);
     setCustomShortcuts((prev) => prev.filter((item) => item.id !== id));
+    // S3: keep suggestions clean by dropping from history too
+    if (removed) {
+      setHistory((prev) => prev.filter((h) => !(h.href === removed.href && h.label === removed.label)));
+    }
     triggerToast("Shortcut removed", "warning");
   };
 
@@ -423,6 +426,17 @@ export function Topbar() {
           >
             <MousePointer2 className="h-4 w-4" />
             Start guided tour
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onSelect={() => {
+              startHCITour();
+              triggerToast("Starting HCI Golden Rules presentation", "info");
+            }}
+            className="gap-2 text-sm font-semibold text-amber-200"
+            data-hci="hci-tour-trigger-mobile"
+          >
+            <BookOpen className="h-4 w-4" />
+            HCI Presentation
           </DropdownMenuItem>
           <DropdownMenuItem asChild className="font-semibold text-indigo-200">
             <Link href="/dashboard">Go to Dashboard</Link>
@@ -483,6 +497,7 @@ export function Topbar() {
             id="search-suggestions"
             className="absolute left-0 right-0 top-full mt-2 rounded-xl border border-slate-800 bg-slate-950/95 p-3 shadow-lg shadow-slate-950/50 backdrop-blur"
             role="listbox"
+            data-tour="search-suggestions"
           >
             <p className="mb-2 text-[11px] uppercase tracking-wide text-slate-500">
               Search results (↑↓ to navigate, Enter to select, Esc to close)
@@ -647,16 +662,13 @@ export function Topbar() {
           </DropdownMenuContent>
         </DropdownMenu>
         <Separator orientation="vertical" className="hidden h-6 bg-slate-800 lg:block" />
-        <Button
-          variant="ghost"
-          size="icon"
-          className="hidden h-9 w-9 rounded-full text-slate-200 hover:bg-slate-900 lg:inline-flex"
-          onClick={() => triggerToast("Tips: Cmd/Ctrl+K search, ↑↓ navigate, Enter open, Esc close.", "info")}
+        <InfoBadge
+          content="Tips: Cmd/Ctrl+K to search, ↑↓ navigate, Enter open, Esc close. Add shortcuts with the bookmark icon."
           aria-label="Usage tips"
           data-hci="info-button"
-        >
-          <Info className="h-4 w-4" />
-        </Button>
+          onClick={() => triggerToast("Tips: Cmd/Ctrl+K search, ↑↓ navigate, Enter open, Esc close.", "info")}
+          className="hidden lg:inline-flex"
+        />
         <Button
           variant="outline"
           size="sm"
@@ -668,6 +680,21 @@ export function Topbar() {
         >
           <MousePointer2 className="h-4 w-4" />
           {auth.showTour ? "Tour running" : "Start tour"}
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          className="hidden items-center gap-2 rounded-full border-amber-700/60 bg-amber-950/30 text-[11px] font-semibold text-amber-200 hover:border-amber-500 hover:bg-amber-950/50 md:flex"
+          onClick={() => {
+            startHCITour();
+            triggerToast("Starting HCI Golden Rules presentation", "info");
+          }}
+          data-tour="hci-tour-trigger"
+          data-hci="hci-presentation"
+          aria-pressed={auth.showHCITour}
+        >
+          <BookOpen className="h-4 w-4" />
+          {auth.showHCITour ? "HCI Tour running" : "HCI Presentation"}
         </Button>
         <Button
           variant="ghost"
@@ -687,45 +714,89 @@ export function Topbar() {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
-            variant="ghost"
-            size="sm"
-            className="hidden items-center gap-2 rounded-full border border-slate-900 bg-slate-900/70 text-xs font-medium text-emerald-200 hover:bg-slate-900 lg:flex"
-            onClick={() => triggerToast("Network status refreshed", "success")}
-            aria-label="Network status details"
-            data-hci="network-status"
-          >
-            <span className="flex h-2 w-2 items-center justify-center rounded-full bg-emerald-400" />
-            Network stable
-          </Button>
-        </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-64 bg-slate-950 text-slate-100">
-            <DropdownMenuItem className="flex justify-between text-sm">
-              <span>Latency</span>
-              <span className="font-semibold text-emerald-300">24 ms</span>
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2 rounded-full border-slate-800 bg-slate-900/70 text-xs font-semibold text-slate-100 hover:border-indigo-500 hover:bg-slate-900"
+              aria-label="Account menu"
+              data-hci="account-menu"
+            >
+              <User className="h-4 w-4" />
+              {auth.userName ?? "admin"}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56 bg-slate-950 text-slate-100">
+            <DropdownMenuItem className="text-xs text-slate-400" disabled>
+              Signed in as {auth.userName ?? "admin"}
             </DropdownMenuItem>
-            <DropdownMenuItem className="flex justify-between text-sm">
-              <span>Uptime</span>
-              <span className="text-slate-300">12d 4h</span>
+            <DropdownMenuItem
+              className="gap-2 text-sm"
+              onSelect={(e) => {
+                e.preventDefault();
+                openPasswordModal();
+              }}
+            >
+              <Settings className="h-4 w-4" />
+              Change password
             </DropdownMenuItem>
-            <DropdownMenuItem className="flex justify-between text-sm">
-              <span>Packet loss</span>
-              <span className="text-slate-300">&lt;0.1%</span>
+            <DropdownMenuItem
+              className="gap-2 text-sm text-red-200 focus:text-red-100"
+              onSelect={(e) => {
+                e.preventDefault();
+                logout();
+              }}
+            >
+              <LogOut className="h-4 w-4" />
+              Sign out
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-        <Button
-          variant="secondary"
-          size="sm"
-          className="flex items-center gap-2 rounded-full bg-indigo-500 px-3 text-xs font-semibold text-white shadow-lg shadow-indigo-900/40 hover:bg-indigo-600"
-          asChild
-          onClick={() => triggerToast("Opening Live Monitor…", "info")}
-          data-hci="live-monitor"
-        >
-          <Link href="/performance">
-            <Activity className="h-4 w-4" />
-            Live Monitor
-          </Link>
-        </Button>
+
+        {/* Network Status Badge */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="hidden items-center gap-2 rounded-full border border-emerald-800/60 bg-emerald-950/30 text-[11px] font-semibold text-emerald-200 hover:border-emerald-500 hover:bg-emerald-950/50 lg:flex"
+              data-tour="network-status"
+              data-hci="network-badge"
+              aria-label="Network status"
+            >
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
+              </span>
+              Network stable
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-64 bg-slate-950 text-slate-100">
+            <div className="px-3 py-2 text-xs font-semibold text-slate-400 uppercase">Connection Health</div>
+            <DropdownMenuItem className="flex justify-between text-sm" disabled>
+              <span>Status</span>
+              <span className="text-emerald-400">Connected</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem className="flex justify-between text-sm" disabled>
+              <span>Latency</span>
+              <span className="text-slate-300">12ms</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem className="flex justify-between text-sm" disabled>
+              <span>Packet Loss</span>
+              <span className="text-slate-300">0.0%</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem className="flex justify-between text-sm" disabled>
+              <span>Uptime</span>
+              <span className="text-slate-300">3d 14h 22m</span>
+            </DropdownMenuItem>
+            <Separator className="my-1 bg-slate-800" />
+            <DropdownMenuItem 
+              className="text-sm text-indigo-300"
+              onSelect={() => router.push("/performance")}
+            >
+              View detailed stats →
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
         <Button
           variant="ghost"
           size="icon"
@@ -742,42 +813,77 @@ export function Topbar() {
       </div>
 
       <Dialog open={shortcutDialogOpen} onOpenChange={(open) => setShortcutDialogOpen(open)}>
-        <DialogContent className="bg-slate-950 text-slate-100">
+        <DialogContent className="bg-slate-950 text-slate-100" data-tour="shortcut-dialog">
           <DialogHeader>
             <DialogTitle>Add a shortcut</DialogTitle>
             <DialogDescription className="text-sm text-slate-400">
               Save quick links to pages or sections. Internal paths only (e.g. /wifi).
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-3">
-            <label className="block space-y-1 text-sm">
-              <span className="text-slate-300">Label</span>
-              <Input
-                value={newShortcut.label}
-                onChange={(e) => setNewShortcut((prev) => ({ ...prev, label: e.target.value }))}
-                placeholder="e.g. Wi-Fi guest controls"
-                className="bg-slate-900/70"
-              />
-            </label>
-            <label className="block space-y-1 text-sm">
-              <span className="text-slate-300">Link</span>
-              <Input
-                value={newShortcut.href}
-                onChange={(e) => setNewShortcut((prev) => ({ ...prev, href: e.target.value }))}
-                placeholder="/wifi"
-                className="bg-slate-900/70"
-              />
-            </label>
-            {shortcutError && <p className="text-xs text-amber-200">{shortcutError}</p>}
+          <div className="space-y-4">
+            <div className="space-y-3 rounded-md border border-slate-800 bg-slate-950/60 p-3">
+              <label className="block space-y-1 text-sm">
+                <span className="text-slate-300">Label</span>
+                <Input
+                  value={newShortcut.label}
+                  onChange={(e) => setNewShortcut((prev) => ({ ...prev, label: e.target.value }))}
+                  placeholder="e.g. Wi-Fi guest controls"
+                  className="bg-slate-900/70"
+                />
+              </label>
+              <label className="block space-y-1 text-sm">
+                <span className="text-slate-300">Link</span>
+                <Input
+                  value={newShortcut.href}
+                  onChange={(e) => setNewShortcut((prev) => ({ ...prev, href: e.target.value }))}
+                  placeholder="/wifi"
+                  className="bg-slate-900/70"
+                />
+              </label>
+              {shortcutError && <p className="text-xs text-amber-200">{shortcutError}</p>}
+              <DialogFooter className="gap-2 sm:gap-0 px-0">
+                <Button variant="ghost" size="sm" onClick={() => setShortcutDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button size="sm" className="bg-indigo-500 text-white hover:bg-indigo-600" onClick={saveCustomShortcut}>
+                  Save shortcut
+                </Button>
+              </DialogFooter>
+            </div>
+
+            <div className="space-y-2 rounded-md border border-slate-800 bg-slate-950/60 p-3">
+              <div className="flex items-center justify-between text-sm font-semibold text-slate-100">
+                <span>Saved shortcuts</span>
+                <span className="text-[11px] text-slate-500">{customShortcuts.length || "0"}</span>
+              </div>
+              {customShortcuts.length === 0 && (
+                <p className="text-xs text-slate-500">No custom shortcuts yet. Add one to jump faster.</p>
+              )}
+              {customShortcuts.length > 0 && (
+                <div className="space-y-2">
+                  {customShortcuts.map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex items-center justify-between rounded-md border border-slate-800 bg-slate-900/70 px-3 py-2 text-sm text-slate-200"
+                    >
+                      <div className="flex flex-col">
+                        <span className="font-medium">{item.label}</span>
+                        <span className="text-xs text-slate-500">{item.href}</span>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-amber-200 hover:text-amber-100"
+                        onClick={() => removeShortcut(item.id)}
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="ghost" size="sm" onClick={() => setShortcutDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button size="sm" className="bg-indigo-500 text-white hover:bg-indigo-600" onClick={saveCustomShortcut}>
-              Save shortcut
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
 

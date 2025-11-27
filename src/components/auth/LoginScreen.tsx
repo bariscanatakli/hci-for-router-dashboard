@@ -1,22 +1,28 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Lock, Shield, Wifi } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { login } from "@/store/authStore";
+import { getStoredPassword, login } from "@/store/authStore";
 import { cn } from "@/lib/utils";
 
-const demoUser = { username: "admin", password: "password123" };
+const demoUser = { username: "admin" };
 
 export function LoginScreen() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [expectedPassword, setExpectedPassword] = useState<string>("admin");
 
   const canSubmit = useMemo(() => username.trim().length >= 3 && password.trim().length >= 4, [username, password]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setExpectedPassword(getStoredPassword());
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,13 +30,14 @@ export function LoginScreen() {
       setError("Fill username and password.");
       return;
     }
-    if (username === demoUser.username && password === demoUser.password) {
-      login(username);
-    } else {
-      // Dummy check: allow any creds but warn if not demo
-      setError("Demo credentials are admin / password123 (others are allowed for mock login).");
-      login(username || "guest");
+    const normalizedUser = username.trim().toLowerCase();
+    const expectedUser = demoUser.username;
+    if (normalizedUser !== expectedUser || password !== expectedPassword) {
+      setError(`Use admin / ${expectedPassword} to sign in.`);
+      return;
     }
+    login(username.trim(), { usedDefaultPassword: expectedPassword === "admin" && password === "admin" });
+    setError(null);
   };
 
   return (
@@ -43,8 +50,8 @@ export function LoginScreen() {
           </div>
           <CardTitle className="text-2xl text-slate-50">Welcome back</CardTitle>
           <CardDescription className="text-sm text-slate-400">
-            Dummy login only. Use <span className="font-semibold text-indigo-200">admin / password123</span> or any
-            credentials to continue.
+            Dummy login only. Use <span className="font-semibold text-indigo-200">admin / {expectedPassword}</span> to
+            continue. You&apos;ll be asked to change the default password after sign-in.
           </CardDescription>
         </CardHeader>
         <CardContent>

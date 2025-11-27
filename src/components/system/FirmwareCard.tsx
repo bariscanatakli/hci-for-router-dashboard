@@ -50,7 +50,7 @@ export function FirmwareCard({
         : "text-red-300 bg-red-500/10";
 
   return (
-    <Card className="border-slate-800 bg-slate-900/50">
+    <Card className="border-slate-800 bg-slate-900/50 h-full" data-tour="system-firmware">
       <CardHeader className="flex flex-row items-start justify-between gap-3">
         <div className="space-y-1">
           <CardTitle className="text-base text-slate-100">Firmware</CardTitle>
@@ -157,7 +157,7 @@ export function FirmwareCard({
       )}
 
       <Dialog open={confirmApply} onOpenChange={(open) => !open && setConfirmApply(false)}>
-        <DialogContent className="bg-slate-950 text-slate-100">
+        <DialogContent className="bg-slate-950 text-slate-100" data-tour="firmware-confirm-dialog">
           <DialogHeader>
             <DialogTitle>Apply firmware update?</DialogTitle>
             <DialogDescription>

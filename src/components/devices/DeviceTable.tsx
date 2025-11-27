@@ -2,18 +2,19 @@
 
 import React from "react";
 import { NetworkDevice } from "@/lib/types/devices";
-import { DeviceRow } from "./DeviceRow";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { formatRelativeTime } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { DeviceRow } from "./DeviceRow";
 
 interface DeviceTableProps {
   devices: NetworkDevice[];
   onInspect: (device: NetworkDevice) => void;
   summary?: string;
+  onClearFilters?: () => void;
 }
 
-export function DeviceTable({ devices, onInspect, summary }: DeviceTableProps) {
+export function DeviceTable({ devices, onInspect, summary, onClearFilters }: DeviceTableProps) {
   return (
     <Card className="border-slate-800 bg-slate-900/40" data-tour="devices-table">
       <CardHeader>
@@ -42,11 +43,25 @@ export function DeviceTable({ devices, onInspect, summary }: DeviceTableProps) {
               ))}
               {devices.length === 0 && (
                 <tr>
-                  <td
-                    colSpan={6}
-                    className="px-3 py-4 text-center text-sm text-slate-400"
-                  >
-                    No devices match the current filters.
+                  <td colSpan={6} className="px-3 py-5 text-center text-sm text-slate-200">
+                    <div className="mx-auto flex max-w-xl flex-col items-center gap-3 rounded-lg border border-slate-800 bg-slate-950/70 px-4 py-4">
+                      <div className="text-base font-semibold text-slate-50">No devices match your filters</div>
+                      <p className="text-xs text-slate-400">
+                        Try clearing filters or resetting the search to see all connected clients.
+                      </p>
+                      <div className="flex flex-wrap items-center justify-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="border-slate-800 text-xs text-slate-100 hover:border-indigo-500 hover:text-indigo-100"
+                          onClick={onClearFilters}
+                          disabled={!onClearFilters}
+                        >
+                          Reset filters
+                        </Button>
+                        <p className="text-[11px] text-slate-500">Tip: search by name, IP, or MAC</p>
+                      </div>
+                    </div>
                   </td>
                 </tr>
               )}

@@ -13,9 +13,12 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { InfoBadge } from "@/components/ui/info-badge";
+import { useSettingsState } from "@/store/settingsStore";
 
 export function WifiStatusCard() {
   const router = useRouter();
+  const { mode } = useSettingsState();
   const [wifiStatus] = useState({
     ssid: "HomeNetwork_5G",
     band: "5GHz",
@@ -37,13 +40,31 @@ export function WifiStatusCard() {
   const hasWarning = !wifiStatus.enabled || effectiveSignal < 50;
 
   return (
-    <Card className="border-slate-800 bg-slate-900/50">
+    <Card
+      className="border-slate-800 bg-slate-900/50 cursor-pointer transition hover:border-indigo-500/50 hover:shadow-lg hover:shadow-indigo-950/20"
+      data-tour="status-card-wifi"
+      onClick={() => router.push("/wifi")}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          router.push("/wifi");
+        }
+      }}
+    >
       <CardHeader>
         <div className="flex items-start justify-between">
           <div className="space-y-1">
             <CardTitle className="flex items-center gap-2 text-base">
               <Wifi className="h-4 w-4 text-indigo-400" />
               Wi-Fi Status
+              <InfoBadge
+                content="Preview only. Full edits (including guest network) are available in Expert mode on the Wi-Fi page."
+                aria-label="Wi-Fi status info"
+              >
+                i
+              </InfoBadge>
             </CardTitle>
             <CardDescription className="text-xs">
               Wireless network overview
@@ -123,8 +144,10 @@ export function WifiStatusCard() {
               size="sm" 
               onClick={() => router.push("/wifi")}
               className="h-7 text-xs"
+              disabled={mode === "basic"}
+              title={mode === "basic" ? "Switch to Expert mode to edit guest network" : "Configure guest network"}
             >
-              Configure
+              {mode === "basic" ? "Expert only" : "Configure"}
             </Button>
           </div>
         </div>

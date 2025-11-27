@@ -1,11 +1,12 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Shield, ShieldAlert, ShieldCheck, ShieldX, Info, Clock, AlertTriangle } from "lucide-react";
+import { Shield, ShieldAlert, ShieldCheck, ShieldX, Clock, AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { formatRelativeTime } from "@/lib/utils";
+import { InfoBadge } from "@/components/ui/info-badge";
 
 interface FirewallLevelSliderProps {
   value: number;
@@ -44,6 +45,12 @@ export function FirewallLevelSlider({
         <CardTitle className="flex items-center gap-2 text-base">
           <ShieldCheck className="h-4 w-4 text-indigo-400" />
           Firewall level
+          <InfoBadge
+            content="Select strictness (low/medium/high). Preview only; ensure port forwards and smart devices still work."
+            aria-label="Firewall level info"
+          >
+            i
+          </InfoBadge>
         </CardTitle>
         <CardDescription className="text-xs">
           Choose protection level; stricter rules may block some services.

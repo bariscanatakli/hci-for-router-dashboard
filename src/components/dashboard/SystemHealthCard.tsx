@@ -11,8 +11,11 @@ import {
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { InfoBadge } from "@/components/ui/info-badge";
+import { useNavigateAndScroll } from "@/hooks/useNavigateAndScroll";
 
 export function SystemHealthCard() {
+  const navigateAndScroll = useNavigateAndScroll();
   const systemHealth = {
     overall: "good" as const,
     firmwareVersion: "v2.4.1",
@@ -78,14 +81,37 @@ export function SystemHealthCard() {
     return `${days}d ${hours}h ${minutes}m ${secondsLeft}s`;
   };
 
+  const handleNavigate = () =>
+    navigateAndScroll("/system", '[data-tour="system-heading"]', {
+      block: "start",
+      highlight: true,
+    });
+
   return (
-    <Card className="border-slate-800 bg-slate-900/50">
+    <Card
+      className="border-slate-800 bg-slate-900/50 cursor-pointer transition hover:border-indigo-500/50 hover:shadow-lg hover:shadow-indigo-950/20"
+      role="button"
+      tabIndex={0}
+      onClick={handleNavigate}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          handleNavigate();
+        }
+      }}
+    >
       <CardHeader>
         <div className="flex items-start justify-between">
           <div className="space-y-1">
             <CardTitle className="flex items-center gap-2 text-base">
               <Server className="h-4 w-4 text-indigo-400" />
               System Health
+              <InfoBadge
+                content="CPU, memory, temperature, and uptime are preview-only; wire telemetry for live data."
+                aria-label="System health info"
+              >
+                i
+              </InfoBadge>
             </CardTitle>
             <CardDescription className="text-xs">
               Router performance metrics

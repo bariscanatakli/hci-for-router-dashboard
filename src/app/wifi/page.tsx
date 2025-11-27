@@ -7,10 +7,12 @@ import { GuestWifiToggle } from "@/components/wifi/GuestWifiToggle";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { WifiConfig, WifiStatus } from "@/lib/types/wifi";
-import { useSettingsState } from "@/store/settingsStore";
+import { toggleMode, useSettingsState } from "@/store/settingsStore";
 import { useFeedback } from "@/components/ui/feedback";
+import { InfoBadge } from "@/components/ui/info-badge";
 
 const mockConfig: WifiConfig = {
   ssid: "HomeNetwork",
@@ -50,11 +52,18 @@ export default function WifiPage() {
   const [showDevices, setShowDevices] = useState(false);
   const [showBasicPassword, setShowBasicPassword] = useState(false);
   const [savingBasic, setSavingBasic] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [advancedSettings, setAdvancedSettings] = useState({
     transmitPower: 75,
     dfsChannels: true,
     macFiltering: false,
     bandSteering: true,
+    band24Channel: 6,
+    band5Channel: 48,
+    vlanId: 20,
+    guestSchedule: "08:00-22:00",
   });
   const { mode } = useSettingsState();
   const { notify } = useFeedback();
@@ -67,6 +76,7 @@ export default function WifiPage() {
     const newPassword = `guest-${randomSuffix}`;
     setConfig((c) => ({ ...c, guestSsid: newSsid, guestPassword: newPassword, guestEnabled: true }));
     setPendingStatus((s) => ({ ...(s ?? effectiveStatus), guestEnabled: true }));
+    setNotice("Guest network regenerated (mock). Remember to save.");
   };
 
   const signalTone = useMemo(() => {
@@ -89,6 +99,18 @@ export default function WifiPage() {
               Configure wireless networks, guest access, and security posture. Preview mode — changes do not persist.
             </p>
           </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 text-xs text-slate-300" role="status" aria-live="polite">
+          {savingBasic ? (
+            <span className="rounded-full border border-slate-800 bg-slate-900 px-3 py-1 text-amber-100">Saving…</span>
+          ) : lastSavedAt ? (
+            <span className="rounded-full border border-slate-800 bg-slate-900 px-3 py-1 text-emerald-200">
+              Last saved {new Date(lastSavedAt).toLocaleTimeString()}
+            </span>
+          ) : (
+            <span className="rounded-full border border-slate-800 bg-slate-900 px-3 py-1 text-slate-200">No recent saves</span>
+          )}
+          {saveError && <span className="text-amber-200">{saveError}</span>}
         </div>
       </header>
 
@@ -179,16 +201,25 @@ export default function WifiPage() {
                     <Wifi className="h-4 w-4 text-indigo-400" />
                     Basic Wi-Fi setup
                   </CardTitle>
-                  <CardDescription className="text-xs">
-                    Update home network name and password. Advanced controls are available in Expert mode.
-                  </CardDescription>
-                </div>
-                <span className="text-[11px] uppercase tracking-wide text-indigo-200">Basic mode</span>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid gap-3 md:grid-cols-2">
-                  <div className="space-y-1">
-                    <label className="text-xs font-medium text-slate-400">Network Name (SSID)</label>
+              <CardDescription className="text-xs">
+                Update home network name and password. Advanced controls are available in Expert mode.
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              <InfoBadge
+                content="Basic Wi-Fi controls for quick edits. Switch to Expert for full radio settings."
+                aria-label="Basic Wi-Fi info"
+                data-hci="info-basic-wifi"
+              >
+                i
+              </InfoBadge>
+              <span className="text-[11px] uppercase tracking-wide text-indigo-200">Basic mode</span>
+            </div>
+          </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-3 md:grid-cols-2">
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-slate-400">Network Name (SSID)</label>
                     <input
                       value={config.ssid}
                       onChange={(e) => setConfig((c) => ({ ...c, ssid: e.target.value }))}
@@ -222,11 +253,7 @@ export default function WifiPage() {
                     variant="ghost"
                     size="sm"
                     className="text-slate-200"
-                    onClick={() => {
-                      setConfig(mockConfig);
-                      setNotice("Reverted to mock defaults.");
-                      setTimeout(() => setNotice(null), 1800);
-                    }}
+                    onClick={() => setShowResetConfirm(true)}
                   >
                     Reset
                   </Button>
@@ -234,12 +261,19 @@ export default function WifiPage() {
                     size="sm"
                     className="bg-indigo-500 text-white hover:bg-indigo-600"
                     onClick={() => {
+                      if (config.ssid.trim().length < 3) {
+                        setSaveError("SSID must be at least 3 characters.");
+                        setNotice(null);
+                        return;
+                      }
                       setSavingBasic(true);
+                      setSaveError(null);
                       setStatus((s) => ({ ...s, enabled: true }));
                       setNotice("Saving Wi-Fi settings…");
                       setTimeout(() => {
                         setSavingBasic(false);
                         setNotice("Wi-Fi settings saved (mock).");
+                        setLastSavedAt(Date.now());
                         setTimeout(() => setNotice(null), 2000);
                       }, 600);
                     }}
@@ -263,22 +297,22 @@ export default function WifiPage() {
             <WifiForm config={config} onChange={setConfig} disabled={!effectiveStatus.enabled} />
           )}
 
-          {mode === "expert" && (
-            <Card className="border-slate-800 bg-slate-900/60" data-tour="wifi-advanced">
-              <CardHeader className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                <div className="space-y-1">
-                  <CardTitle className="flex items-center gap-2 text-base">
-                    <Activity className="h-4 w-4 text-indigo-400" />
-                    Advanced Wi-Fi controls
-                  </CardTitle>
-                  <CardDescription className="text-xs">
-                    Power, DFS, MAC filtering and band steering. Expert mode only.
-                  </CardDescription>
-                </div>
-                <span className="text-[11px] uppercase tracking-wide text-indigo-200">Expert</span>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid gap-3 md:grid-cols-2">
+      {mode === "expert" && (
+        <Card className="border-slate-800 bg-slate-900/60" data-tour="wifi-advanced">
+          <CardHeader className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-1">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Activity className="h-4 w-4 text-indigo-400" />
+                Advanced Wi-Fi controls
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Power, DFS, MAC filtering and band steering. Expert mode only.
+              </CardDescription>
+            </div>
+            <span className="text-[11px] uppercase tracking-wide text-indigo-200">Expert</span>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-3 md:grid-cols-2">
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-xs text-slate-400">
                       <span>Transmit power</span>
@@ -382,6 +416,92 @@ export default function WifiPage() {
 
         <div className="space-y-4">
           {mode === "expert" && (
+            <Card className="border-slate-800 bg-slate-900/60" data-tour="wifi-expert-radio">
+              <CardHeader className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <Activity className="h-4 w-4 text-indigo-400" />
+                    Expert radio tuning
+                  </CardTitle>
+                  <CardDescription className="text-xs">
+                    Per-band channels, width, and VLAN tagging. Changes are mock until API is wired.
+                  </CardDescription>
+                </div>
+                <InfoBadge
+                  content="Set separate channels/width for 2.4/5 GHz, adjust power, and tag SSIDs with VLAN IDs. Preview only."
+                  aria-label="Expert radio info"
+                >
+                  i
+                </InfoBadge>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div className="space-y-1">
+                    <label className="text-xs text-slate-400">2.4 GHz channel</label>
+                    <select
+                      className="w-full rounded-md border border-slate-800 bg-slate-950/70 px-3 py-2 text-sm text-slate-100"
+                      value={advancedSettings.band24Channel}
+                      onChange={(e) =>
+                        setAdvancedSettings((s) => ({ ...s, band24Channel: Number(e.target.value) }))
+                      }
+                    >
+                      {[1, 6, 11].map((ch) => (
+                        <option key={ch} value={ch}>
+                          {ch}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-slate-400">5 GHz channel</label>
+                    <select
+                      className="w-full rounded-md border border-slate-800 bg-slate-950/70 px-3 py-2 text-sm text-slate-100"
+                      value={advancedSettings.band5Channel}
+                      onChange={(e) =>
+                        setAdvancedSettings((s) => ({ ...s, band5Channel: Number(e.target.value) }))
+                      }
+                    >
+                      {[36, 40, 44, 48, 149, 153].map((ch) => (
+                        <option key={ch} value={ch}>
+                          {ch}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div className="space-y-1">
+                    <label className="text-xs text-slate-400">VLAN tag for SSIDs</label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={4094}
+                      value={advancedSettings.vlanId}
+                      onChange={(e) =>
+                        setAdvancedSettings((s) => ({ ...s, vlanId: Number(e.target.value) || 1 }))
+                      }
+                      className="w-full rounded-md border border-slate-800 bg-slate-950/70 px-3 py-2 text-sm text-slate-100"
+                    />
+                    <p className="text-[11px] text-slate-500">Use unique VLANs for guest/IoT isolation.</p>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-slate-400">Guest schedule</label>
+                    <input
+                      type="text"
+                      value={advancedSettings.guestSchedule}
+                      onChange={(e) =>
+                        setAdvancedSettings((s) => ({ ...s, guestSchedule: e.target.value }))
+                      }
+                      className="w-full rounded-md border border-slate-800 bg-slate-950/70 px-3 py-2 text-sm text-slate-100"
+                      placeholder="08:00-22:00"
+                    />
+                    <p className="text-[11px] text-slate-500">Schedule guest SSID availability (HH:MM-HH:MM).</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          {mode === "expert" && (
             <GuestWifiToggle
               enabled={effectiveStatus.enabled && effectiveStatus.guestEnabled}
               guestSsid={config.guestSsid}
@@ -397,6 +517,35 @@ export default function WifiPage() {
                 regenerateGuest();
               }}
             />
+          )}
+          {mode === "basic" && (
+            <Card className="border-slate-800 bg-slate-900/60">
+              <CardHeader className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="h-4 w-4 text-indigo-400" />
+                  <CardTitle className="text-base">Guest network</CardTitle>
+                </div>
+                <InfoBadge
+                  content="Guest network edits are available in Expert mode to avoid accidental changes. Switch modes to edit."
+                  aria-label="Guest network info"
+                >
+                  i
+                </InfoBadge>
+              </CardHeader>
+              <CardContent className="space-y-2 text-sm text-slate-300">
+                <p>Enable Expert mode to edit guest SSID and password. Current status is view-only in Basic mode.</p>
+                <Button
+                  size="sm"
+                  className="bg-indigo-500 text-white hover:bg-indigo-600"
+                  onClick={() => {
+                    toggleMode();
+                    notify({ title: "Expert mode enabled", tone: "info" });
+                  }}
+                >
+                  Switch to Expert mode
+                </Button>
+              </CardContent>
+            </Card>
           )}
 
           <Card className="border-slate-800 bg-slate-900/50">
@@ -443,6 +592,35 @@ export default function WifiPage() {
           )}
         </div>
       </section>
+
+      <Dialog open={showResetConfirm} onOpenChange={(open) => setShowResetConfirm(open)}>
+        <DialogContent className="bg-slate-950 text-slate-100" data-tour="wifi-reset-dialog">
+          <DialogHeader>
+            <DialogTitle>Reset Wi-Fi settings?</DialogTitle>
+            <DialogDescription className="text-sm text-slate-400">
+              This restores mock defaults and clears unsaved changes. You can still re-apply edits afterward.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="ghost" size="sm" onClick={() => setShowResetConfirm(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => {
+                setConfig(mockConfig);
+                setPendingStatus(null);
+                setNotice("Reverted to mock defaults.");
+                setShowResetConfirm(false);
+                setTimeout(() => setNotice(null), 2000);
+              }}
+            >
+              Reset now
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {notice && (
         <div

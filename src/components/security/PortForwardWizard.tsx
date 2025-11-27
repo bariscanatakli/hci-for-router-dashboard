@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { PortForwardRule } from "@/lib/types/security";
+import { InfoBadge } from "@/components/ui/info-badge";
 
 interface PortForwardWizardProps {
   rules: PortForwardRule[];
@@ -39,7 +40,7 @@ export function PortForwardWizard({ rules, onChange }: PortForwardWizardProps) {
     const errors: string[] = [];
     if (!draft.name.trim()) errors.push("Rule name required");
     if (!draft.port || draft.port < 1 || draft.port > 65535) errors.push("Port must be 1-65535");
-    const ipPattern = /^(25[0-5]|2[0-4]\\d|[01]?\\d\\d?)(\\.(25[0-5]|2[0-4]\\d|[01]?\\d\\d?)){3}$/;
+    const ipPattern = /^(25[0-5]|2[0-4]\d|[01]?\d\d?)(\.(25[0-5]|2[0-4]\d|[01]?\d\d?)){3}$/;
     if (!ipPattern.test(draft.targetIp)) errors.push("Target IP must be valid IPv4");
     return errors;
   }, [draft]);
@@ -81,7 +82,15 @@ export function PortForwardWizard({ rules, onChange }: PortForwardWizardProps) {
     <Card className="border-slate-800 bg-slate-900/50" data-tour="port-forward-wizard">
       <CardHeader className="flex flex-row items-start justify-between gap-3">
         <div className="space-y-1">
-          <CardTitle className="text-base">Port Forwarding</CardTitle>
+          <CardTitle className="flex items-center gap-2 text-base">
+            Port Forwarding
+            <InfoBadge
+              content="Add rules to expose internal services. Validate ports/IPs; undo removals; preview only until API is wired."
+              aria-label="Port forward info"
+            >
+              i
+            </InfoBadge>
+          </CardTitle>
           <CardDescription className="text-xs">
             Expose internal services cautiously. Ensure firewall level allows desired access.
           </CardDescription>
@@ -89,7 +98,7 @@ export function PortForwardWizard({ rules, onChange }: PortForwardWizardProps) {
       </CardHeader>
 
       <CardContent className="space-y-4">
-        <div className="grid gap-3 md:grid-cols-4">
+        <div className="grid gap-3 md:grid-cols-4" data-tour="port-forward-form">
           <Field label="Rule name">
             <Input
               value={draft.name}
@@ -155,7 +164,7 @@ export function PortForwardWizard({ rules, onChange }: PortForwardWizardProps) {
           </div>
         )}
 
-        <div className="space-y-2">
+        <div className="space-y-2" data-tour="port-forward-rules">
           {rules.length === 0 && (
             <div className="flex flex-col gap-2 rounded-md border border-slate-800 bg-slate-950/60 px-3 py-3 text-sm text-slate-300">
               <span>No port forwards configured.</span>
@@ -192,7 +201,7 @@ export function PortForwardWizard({ rules, onChange }: PortForwardWizardProps) {
             </div>
           ))}
           {lastRemoved && (
-            <div className="flex items-center justify-between rounded-md border border-slate-800 bg-slate-950/60 px-3 py-2 text-xs text-slate-200">
+            <div className="flex items-center justify-between rounded-md border border-slate-800 bg-slate-950/60 px-3 py-2 text-xs text-slate-200" data-tour="port-forward-undo">
               <span>Rule removed: {lastRemoved.name}</span>
               <Button variant="ghost" size="sm" className="text-indigo-200" onClick={undoRemove}>
                 Undo
@@ -213,7 +222,7 @@ export function PortForwardWizard({ rules, onChange }: PortForwardWizardProps) {
         </div>
 
         <Dialog open={Boolean(confirmRule)} onOpenChange={(open) => !open && setConfirmRule(null)}>
-          <DialogContent className="bg-slate-950 text-slate-100">
+          <DialogContent className="bg-slate-950 text-slate-100" data-tour="port-forward-confirm-dialog">
             <DialogHeader>
               <DialogTitle>Remove port forward?</DialogTitle>
               <DialogDescription>

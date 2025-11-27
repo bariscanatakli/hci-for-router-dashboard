@@ -89,7 +89,10 @@ export function FeedbackViewport({
   onDismiss: (id: string) => void;
 }) {
   return (
-    <div className="pointer-events-none fixed right-4 top-20 z-40 flex w-[320px] flex-col gap-3">
+    <div 
+      className="pointer-events-none fixed right-4 top-20 z-[150] flex w-[320px] flex-col gap-3"
+      data-tour="notification-viewport"
+    >
       {items.map((item) => {
         const styles = toneStyles(item.tone);
         return (
@@ -97,11 +100,12 @@ export function FeedbackViewport({
             key={item.id}
             className={cn(
               "pointer-events-auto flex items-start gap-3 rounded-xl border px-3 py-2 shadow-lg shadow-slate-950/60 backdrop-blur",
-              "text-sm",
+              "text-sm animate-in slide-in-from-right-5 fade-in duration-300",
               styles.container
             )}
             role="status"
             aria-live="polite"
+            data-tour="notification-item"
           >
             <div className="mt-0.5">{styles.icon}</div>
             <div className="flex-1 space-y-0.5">

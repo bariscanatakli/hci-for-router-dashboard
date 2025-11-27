@@ -5,6 +5,7 @@ import { Activity, ArrowDown, ArrowUp } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PerformanceSample } from "@/lib/types/performance";
+import { InfoBadge } from "@/components/ui/info-badge";
 
 interface BandwidthChartProps {
   samples: PerformanceSample[];
@@ -111,6 +112,12 @@ export function BandwidthChart({ samples, timeRangeLabel }: BandwidthChartProps)
           <CardTitle className="flex items-center gap-2 text-base">
             <Activity className="h-4 w-4 text-indigo-400" />
             Bandwidth history
+            <InfoBadge
+              content="Keyboard-accessible bars with live values on focus/hover. Mock data; wire telemetry for live charts."
+              aria-label="Bandwidth chart info"
+            >
+              i
+            </InfoBadge>
           </CardTitle>
           <CardDescription className="text-xs">
             Recent down/up throughput ({timeRangeLabel ?? "recent"}). Values in Mbps; mock data until API is wired.

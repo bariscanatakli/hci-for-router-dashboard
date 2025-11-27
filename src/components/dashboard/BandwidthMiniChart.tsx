@@ -2,16 +2,13 @@
 
 import React from "react";
 import { Activity, TrendingDown, TrendingUp } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { InfoBadge } from "@/components/ui/info-badge";
+import { useNavigateAndScroll } from "@/hooks/useNavigateAndScroll";
 
 export function BandwidthMiniChart() {
+  const navigateAndScroll = useNavigateAndScroll();
   const [hoveredIndex, setHoveredIndex] = React.useState<number | null>(null);
   const [hoveredValue, setHoveredValue] = React.useState<number | null>(null);
   const [hoveredTime, setHoveredTime] = React.useState<string | null>(null);
@@ -139,12 +136,37 @@ export function BandwidthMiniChart() {
   };
 
   return (
-    <Card className="border-slate-800 bg-slate-900/50">
+    <Card
+      className="border-slate-800 bg-slate-900/50 cursor-pointer transition hover:border-indigo-500/50 hover:shadow-lg hover:shadow-indigo-950/20"
+      role="button"
+      tabIndex={0}
+      onClick={() =>
+        navigateAndScroll("/performance", '[data-tour="performance-charts"]', {
+          block: "start",
+          highlight: true,
+        })
+      }
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          navigateAndScroll("/performance", '[data-tour="performance-charts"]', {
+            block: "start",
+            highlight: true,
+          });
+        }
+      }}
+    >
       <CardHeader>
         <div className="space-y-1">
           <CardTitle className="flex items-center gap-2 text-base">
             <Activity className="h-4 w-4 text-indigo-400" />
             Bandwidth Usage
+            <InfoBadge
+              content="Mini download/upload spark charts with hover/focus values. Mock data until telemetry is connected."
+              aria-label="Bandwidth usage info"
+            >
+              i
+            </InfoBadge>
           </CardTitle>
           <CardDescription className="text-xs">
             Real-time network traffic
@@ -155,11 +177,11 @@ export function BandwidthMiniChart() {
       <CardContent>
         <Tabs defaultValue="download">
           <TabsList className="w-full">
-            <TabsTrigger value="download" className="flex-1">
+            <TabsTrigger value="download" className="flex-1" onClick={(e) => e.stopPropagation()}>
               <TrendingDown className="mr-2 h-3.5 w-3.5" />
               Download
             </TabsTrigger>
-            <TabsTrigger value="upload" className="flex-1">
+            <TabsTrigger value="upload" className="flex-1" onClick={(e) => e.stopPropagation()}>
               <TrendingUp className="mr-2 h-3.5 w-3.5" />
               Upload
             </TabsTrigger>

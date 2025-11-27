@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigateAndScroll } from "@/hooks/useNavigateAndScroll";
+import { InfoBadge } from "@/components/ui/info-badge";
 
 export function DevicesSummaryCard() {
   const navigateAndScroll = useNavigateAndScroll();
@@ -36,7 +37,8 @@ export function DevicesSummaryCard() {
 
   return (
     <Card
-      className="cursor-pointer transition-all hover:border-indigo-500/50 hover:shadow-lg hover:shadow-indigo-950/20"
+      className="border-slate-800 bg-slate-900/50 cursor-pointer transition hover:border-indigo-500/50 hover:shadow-lg hover:shadow-indigo-950/20"
+      data-tour="status-card-devices"
       onClick={handleCardClick}
       role="button"
       tabIndex={0}
@@ -52,6 +54,12 @@ export function DevicesSummaryCard() {
           <CardTitle className="flex items-center gap-2 text-base">
             <HardDrive className="h-4 w-4 text-indigo-400" />
             Connected Devices
+            <InfoBadge
+              content="Counts by status and type; click to jump to Devices for detailed management."
+              aria-label="Devices summary info"
+            >
+              i
+            </InfoBadge>
           </CardTitle>
           <CardDescription className="text-xs">
             Network device overview
@@ -98,7 +106,12 @@ export function DevicesSummaryCard() {
           </div>
         </div>
 
-        <Button variant="outline" size="sm" className="w-full" asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full border-slate-800 bg-slate-900/70 text-slate-100 hover:border-indigo-500 hover:bg-slate-900"
+          asChild
+        >
           <Link href="/devices">Manage All Devices</Link>
         </Button>
       </CardContent>

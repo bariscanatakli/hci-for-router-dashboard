@@ -32,7 +32,7 @@ export function DeviceDetailDialog({ open, device, onOpenChange }: DeviceDetailD
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-slate-950 text-slate-100 sm:max-w-md">
+      <DialogContent className="bg-slate-950 text-slate-100 sm:max-w-md" data-tour="device-dialog">
         <DialogHeader className="space-y-1">
           <DialogTitle className="text-lg font-semibold">
             {device.name}
@@ -99,7 +99,7 @@ export function DeviceDetailDialog({ open, device, onOpenChange }: DeviceDetailD
 
         <Separator className="bg-slate-800" />
 
-        <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+        <div className="flex flex-col gap-2 sm:flex-row sm:justify-end" data-tour="device-dialog-actions">
           <Button
             variant="ghost"
             className="sm:flex-1"

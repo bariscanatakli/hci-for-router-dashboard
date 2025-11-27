@@ -129,7 +129,7 @@ export function RebootCard({ onReboot, onRestartModem }: RebootCardProps) {
       </CardContent>
 
       <Dialog open={!!confirm} onOpenChange={(open) => !open && setConfirm(null)}>
-        <DialogContent className="bg-slate-950 text-slate-100">
+        <DialogContent className="bg-slate-950 text-slate-100" data-tour="reboot-confirm-dialog">
           <DialogHeader>
             <DialogTitle>
               {confirm === "router" ? "Reboot router?" : "Restart modem?"}
@@ -148,7 +148,7 @@ export function RebootCard({ onReboot, onRestartModem }: RebootCardProps) {
               We&apos;ll queue the action and show status when done.
             </p>
           </div>
-          <DialogFooter className="gap-2 sm:gap-0">
+          <DialogFooter className="gap-2 sm:gap-0" data-tour="reboot-dialog-actions">
             <Button variant="ghost" size="sm" onClick={() => setConfirm(null)}>
               Cancel
             </Button>

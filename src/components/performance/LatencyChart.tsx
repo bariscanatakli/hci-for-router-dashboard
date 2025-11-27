@@ -4,6 +4,7 @@ import React from "react";
 import { Signal, Activity } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PerformanceSample } from "@/lib/types/performance";
+import { InfoBadge } from "@/components/ui/info-badge";
 
 interface LatencyChartProps {
   samples: PerformanceSample[];
@@ -36,6 +37,12 @@ export function LatencyChart({ samples, targetMs = 30, timeRangeLabel }: Latency
           <CardTitle className="flex items-center gap-2 text-base">
             <Signal className="h-4 w-4 text-indigo-400" />
             Latency & jitter
+            <InfoBadge
+              content="Bars are keyboard-focusable; red glow marks samples over target threshold. Mock data until telemetry is live."
+              aria-label="Latency chart info"
+            >
+              i
+            </InfoBadge>
           </CardTitle>
           <CardDescription className="text-xs">
             Recent latency samples ({timeRangeLabel ?? "recent"}) with a target threshold ({targetMs}ms).

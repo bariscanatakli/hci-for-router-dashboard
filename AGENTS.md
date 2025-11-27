@@ -110,19 +110,19 @@ Sorumluluklar:
 
 Aktif bulgular (çözülecek sırada):
 
-- [ ] S3: GuidedTour highlight kutusu geniş/büyük hedeflerde ortalanmadığı için hedefin sadece sol üstü parlıyor; highlight dikdörtgenini hedefin merkezine oturtacak şekilde yeniden hesapla. (src/components/auth/GuidedTour.tsx)
-- [ ] S7/S3: GuidedTour açıkken arka plan etkileşimleri ve scroll tamamen açık kalıyor (pointer-events-none, focus trap yok); tur modunda sayfayı inert hâle getir, odağı bubble içinde kilitle ve kapatınca önceki odağı geri ver. (src/components/auth/GuidedTour.tsx)
-- [ ] S2/S3: Performance grafikleri (BandwidthChart, LatencyChart) sadece mouse hover ile değer gösteriyor, barlar odaklanabilir değil; klavye erişilebilirliği için tabIndex/onFocus, ok tuşlarıyla gezinme ve aria-live özetleri ekle. (src/components/performance/BandwidthChart.tsx, src/components/performance/LatencyChart.tsx)
-- [ ] S3/S4: Wi‑Fi sayfasında (basic + expert) kaydetme/geri alma işlemleri için daha güçlü geri bildirim (saving, success, error) ve inline status chip ekle.
-- [ ] S3/S4: Security save akışı için “Saving…” göstergesi ve son kaydetme zamanı çipi ekle; hata durumunda belirgin uyarı göster.
-- [ ] S3: PortForwardWizard ve Devices tablo boş/edge state’lerine CTA + yönlendirici metin ekle (örn. ilk kural ekle, filtreleri temizle).
+- [x] S3: GuidedTour highlight kutusu geniş/büyük hedeflerde ortalanmadığı için hedefin sadece sol üstü parlıyor; highlight dikdörtgenini hedefin merkezine oturtacak şekilde yeniden hesapla. (src/components/auth/GuidedTour.tsx)
+- [x] S7/S3: GuidedTour açıkken arka plan etkileşimleri ve scroll tamamen açık kalıyor (pointer-events-none, focus trap yok); tur modunda sayfayı inert hâle getir, odağı bubble içinde kilitle ve kapatınca önceki odağı geri ver. (src/components/auth/GuidedTour.tsx)
+- [x] S2/S3: Performance grafikleri (BandwidthChart, LatencyChart) sadece mouse hover ile değer gösteriyor, barlar odaklanabilir değil; klavye erişilebilirliği için tabIndex/onFocus, ok tuşlarıyla gezinme ve aria-live özetleri ekle. (src/components/performance/BandwidthChart.tsx, src/components/performance/LatencyChart.tsx)
+- [x] S3/S4: Wi‑Fi sayfasında (basic + expert) kaydetme/geri alma işlemleri için daha güçlü geri bildirim (saving, success, error) ve inline status chip ekle.
+- [x] S3/S4: Security save akışı için “Saving…” göstergesi ve son kaydetme zamanı çipi ekle; hata durumunda belirgin uyarı göster.
+- [x] S3: PortForwardWizard ve Devices tablo boş/edge state’lerine CTA + yönlendirici metin ekle (örn. ilk kural ekle, filtreleri temizle).
 
 Topbar / Navbar TODO’ları (Shneiderman odaklı):
-- [ ] Bildirim menüsü (S3 geri bildirim) — mock feed + durum ikonları
-- [ ] Arama alanı (S2 kısayol, S8 hafıza) — hızlı link/suggestion ve küçük ekran erişimi
-- [ ] “Network stable” durumu (S3 geri bildirim) — açılır detaylı bağlantı sağlığı
-- [ ] “Live Monitor” aksiyonu (S7 kontrol) — ilgili sayfaya geçiş veya modal
-- [ ] Settings ikonu (S7 kontrol) — System/Settings sayfasına bağlantı
+- [x] Bildirim menüsü (S3 geri bildirim) — mock feed + durum ikonları
+- [x] Arama alanı (S2 kısayol, S8 hafıza) — hızlı link/suggestion ve küçük ekran erişimi
+- [x] “Network stable” durumu (S3 geri bildirim) — açılır detaylı bağlantı sağlığı
+- [x] “Live Monitor” aksiyonu (S7 kontrol) — ilgili sayfaya geçiş veya modal
+- [x] Settings ikonu (S7 kontrol) — System/Settings sayfasına bağlantı
 
 Shneiderman 8 Altın Kural aksiyon listesi:
 - [x] S1 Tutarlılık: Mobilde hızlı nav butonu/CTA eklendi (Topbar nav menüsü içinde “Go to Dashboard”).
@@ -135,8 +135,11 @@ Shneiderman 8 Altın Kural aksiyon listesi:
 - [x] S8 Hafıza yükü: Arama paneli sadeleştirildi, öneriler kısa etiketlerle gösteriliyor.
 
 Yeni TODO’lar:
-- [ ] Destructive aksiyonlarda onay modalı (ör. port forward silme, reboot vb.) + başarı/hata geri bildirimi.
-- [ ] UI bileşenlerine “i” hover yardım rozetleri ekle; tooltip içinde ne yaptığı ve `data-hci` etiketiyle hangi HCI öğesi olduğu belirtilecek.
+- [x] Destructive aksiyonlarda onay modalı (ör. port forward silme, reboot vb.) + başarı/hata geri bildirimi.
+- [x] UI bileşenlerine “i” hover yardım rozetleri ekle; tooltip içinde ne yaptığı ve `data-hci` etiketiyle hangi HCI öğesi olduğu belirtilecek.
+- [x] Topbar’a kullanıcı menüsü (signed-in, logout) taşı, sayfa içi banner’ı temizle; Guided Tour tetikleyicisini Topbar’da tut.
+- [x] Arama panelinde Dashboard/Dashboard overview tekrarını gider.
+- [x] Varsayılan kimlik bilgilerini admin/admin yap; giriş sonrası şifre değiştirme uyarısı + modal ekle, Skip sonrası sayfa uyarısını göster.
 
 ---
 

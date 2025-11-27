@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { setAutoUpdateEnabled, toggleMode, useSettingsState } from "@/store/settingsStore";
 import { fetchSecurityProfile, updateSecurityProfile } from "@/lib/api/security";
 import { useFeedback, StatusChip } from "@/components/ui/feedback";
+import { InfoBadge } from "@/components/ui/info-badge";
 
 export default function SecurityPage() {
   const [profile, setProfile] = useState<SecurityProfile | null>(null);
@@ -26,6 +27,7 @@ export default function SecurityPage() {
   const [lastAttempt, setLastAttempt] = useState<number | null>(null);
   const [retryIn, setRetryIn] = useState<number | null>(null);
   const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
+  const [ipsSensitivity, setIpsSensitivity] = useState<"strict" | "balanced" | "relaxed">("balanced");
   const { notify } = useFeedback();
 
   // Fetch security profile on mount
@@ -196,16 +198,25 @@ export default function SecurityPage() {
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-500 text-white shadow-lg shadow-indigo-900/40">
             <Shield className="h-5 w-5" />
           </div>
+          <div className="flex items-center gap-2">
             <div>
               <h1 className="text-3xl font-bold tracking-tight text-slate-50" data-tour="security-heading">Security</h1>
               <p className="text-sm text-slate-400">
                 Adjust firewall posture, manage port forwards, and oversee threat prevention.
               </p>
             </div>
+            <InfoBadge
+              content="HCI: Clear feedback for save states and destructive steps. Changes stay local until saved."
+              aria-label="Security info"
+              data-hci="info-security"
+            >
+              i
+            </InfoBadge>
+          </div>
         </div>
       </header>
 
-      <div className="mb-2 flex flex-wrap items-center gap-2 text-xs text-slate-400">
+      <div className="mb-2 flex flex-wrap items-center gap-2 text-xs text-slate-400" role="status" aria-live="polite">
         {saving ? (
           <StatusChip tone="info">Saving…</StatusChip>
         ) : lastSavedAt ? (
@@ -213,7 +224,7 @@ export default function SecurityPage() {
         ) : (
           <StatusChip tone="info">No recent saves</StatusChip>
         )}
-        {saveError && <span className="text-amber-200">{saveError}</span>}
+        {saveError && <StatusChip tone="warning">{saveError}</StatusChip>}
       </div>
 
       {hasChanges && (
@@ -265,8 +276,8 @@ export default function SecurityPage() {
         />
       </section>
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        <div className="lg:col-span-2 space-y-4">
+      <div className="grid gap-4 lg:grid-cols-3 items-stretch">
+        <div className="lg:col-span-2 flex flex-col space-y-4">
           <FirewallLevelSlider
             value={profile.firewallLevel}
             onChange={(level) => setProfile((p) => p ? { ...p, firewallLevel: level } : null)}
@@ -275,7 +286,7 @@ export default function SecurityPage() {
           />
 
           {mode === "expert" && (
-            <Card className="border-slate-800 bg-slate-900/60" data-tour="security-expert">
+            <Card className="border-slate-800 bg-slate-900/60 flex-1" data-tour="security-expert">
               <CardHeader className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                 <div className="space-y-1">
                   <CardTitle className="flex items-center gap-2 text-base">
@@ -288,43 +299,67 @@ export default function SecurityPage() {
                 </div>
                 <StatusChip tone="info">Expert</StatusChip>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center justify-between rounded-md border border-slate-800 bg-slate-950/50 px-3 py-2">
+              <CardContent className="space-y-4 flex-1 flex flex-col justify-evenly">
+                <div className="flex items-center justify-between rounded-md border border-slate-800 bg-slate-950/50 px-4 py-3">
                   <div>
                     <p className="text-sm font-semibold text-slate-200">IPS sensitivity</p>
-                    <p className="text-[11px] text-slate-500">Higher catches more threats but may false-positive.</p>
+                    <p className="text-xs text-slate-500">Higher catches more threats but may false-positive.</p>
                   </div>
-                  <div className="flex items-center gap-2 text-sm">
+                  <div className="flex items-center gap-1 text-sm rounded-md border border-slate-700 p-0.5 bg-slate-900">
                     <Button
                       size="sm"
-                      variant="outline"
-                      className="border-slate-800 text-slate-200"
-                      onClick={() => notify({ title: "IPS set to Strict", tone: "info" })}
+                      variant="ghost"
+                      className={cn(
+                        "px-3 py-1 h-7 transition-all",
+                        ipsSensitivity === "strict"
+                          ? "bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 hover:text-amber-200"
+                          : "text-slate-400 hover:text-slate-200 hover:bg-slate-800"
+                      )}
+                      onClick={() => {
+                        setIpsSensitivity("strict");
+                        notify({ title: "IPS sensitivity set to Strict", description: "More aggressive threat detection enabled", tone: "success" });
+                      }}
                     >
                       Strict
                     </Button>
                     <Button
                       size="sm"
-                      variant="outline"
-                      className="border-slate-800 text-slate-200"
-                      onClick={() => notify({ title: "IPS set to Balanced", tone: "info" })}
+                      variant="ghost"
+                      className={cn(
+                        "px-3 py-1 h-7 transition-all",
+                        ipsSensitivity === "balanced"
+                          ? "bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 hover:text-indigo-200"
+                          : "text-slate-400 hover:text-slate-200 hover:bg-slate-800"
+                      )}
+                      onClick={() => {
+                        setIpsSensitivity("balanced");
+                        notify({ title: "IPS sensitivity set to Balanced", description: "Recommended setting for most users", tone: "success" });
+                      }}
                     >
                       Balanced
                     </Button>
                     <Button
                       size="sm"
-                      variant="outline"
-                      className="border-slate-800 text-slate-200"
-                      onClick={() => notify({ title: "IPS set to Relaxed", tone: "info" })}
+                      variant="ghost"
+                      className={cn(
+                        "px-3 py-1 h-7 transition-all",
+                        ipsSensitivity === "relaxed"
+                          ? "bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 hover:text-emerald-200"
+                          : "text-slate-400 hover:text-slate-200 hover:bg-slate-800"
+                      )}
+                      onClick={() => {
+                        setIpsSensitivity("relaxed");
+                        notify({ title: "IPS sensitivity set to Relaxed", description: "Fewer false positives, less strict detection", tone: "success" });
+                      }}
                     >
                       Relaxed
                     </Button>
                   </div>
                 </div>
-                <div className="flex items-center justify-between rounded-md border border-slate-800 bg-slate-950/50 px-3 py-2">
+                <div className="flex items-center justify-between rounded-md border border-slate-800 bg-slate-950/50 px-4 py-3">
                   <div>
                     <p className="text-sm font-semibold text-slate-200">Geo/IP blocking</p>
-                    <p className="text-[11px] text-slate-500">Block high-risk regions or known bad IP lists.</p>
+                    <p className="text-xs text-slate-500">Block high-risk regions or known bad IP lists.</p>
                   </div>
                   <Button
                     size="sm"
@@ -334,10 +369,10 @@ export default function SecurityPage() {
                     Update list
                   </Button>
                 </div>
-                <div className="flex items-center justify-between rounded-md border border-slate-800 bg-slate-950/50 px-3 py-2">
+                <div className="flex items-center justify-between rounded-md border border-slate-800 bg-slate-950/50 px-4 py-3">
                   <div>
                     <p className="text-sm font-semibold text-slate-200">Export ruleset</p>
-                    <p className="text-[11px] text-slate-500">Download JSON backup of current firewall rules.</p>
+                    <p className="text-xs text-slate-500">Download JSON backup of current firewall rules.</p>
                   </div>
                   <Button
                     size="sm"
@@ -352,13 +387,8 @@ export default function SecurityPage() {
             </Card>
           )}
 
-          {mode === "expert" ? (
-            <PortForwardWizard
-              rules={profile.portForwards}
-              onChange={(rules: PortForwardRule[]) => setProfile((p) => p ? { ...p, portForwards: rules } : null)}
-            />
-          ) : (
-            <Card className="border-slate-800 bg-slate-900/60">
+          {mode !== "expert" && (
+            <Card className="border-slate-800 bg-slate-900/60 flex-1">
               <CardHeader className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                 <div className="space-y-1">
                   <CardTitle className="text-base">Advanced controls hidden</CardTitle>
@@ -382,7 +412,7 @@ export default function SecurityPage() {
           )}
         </div>
 
-        <div className="space-y-4">
+        <div className="flex flex-col space-y-4">
           <Card className="border-slate-800 bg-slate-900/50">
             <CardHeader className="space-y-1">
               <CardTitle className="flex items-center gap-2 text-base">
@@ -444,6 +474,22 @@ export default function SecurityPage() {
             </CardContent>
           </Card>
 
+          <Card className="border-slate-800 bg-slate-900/50 flex-1">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">Update Status</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-1.5 text-xs text-slate-300">
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400">Latest Update</span>
+                <span className="text-emerald-300 font-medium">26.11.2025 03:12</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400">Last Scan</span>
+                <span className="text-blue-300 font-medium">27.11.2025 14:45</span>
+              </div>
+            </CardContent>
+          </Card>
+
           {feedback && (
             <div className="rounded-md border border-slate-800 bg-slate-950/70 px-3 py-2 text-xs text-slate-100" role="status" aria-live="polite">
               {feedback}
@@ -456,6 +502,14 @@ export default function SecurityPage() {
           )}
         </div>
       </div>
+
+      {/* Port Forwarding - Full width (Expert mode only) */}
+      {mode === "expert" && (
+        <PortForwardWizard
+          rules={profile.portForwards}
+          onChange={(rules: PortForwardRule[]) => setProfile((p) => p ? { ...p, portForwards: rules } : null)}
+        />
+      )}
     </div>
   );
 }

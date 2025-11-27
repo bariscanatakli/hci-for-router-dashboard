@@ -12,8 +12,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { InfoBadge } from "@/components/ui/info-badge";
+import { useNavigateAndScroll } from "@/hooks/useNavigateAndScroll";
 
 export function InternetStatusCard() {
+  const navigateAndScroll = useNavigateAndScroll();
   const status = {
     connected: true,
     publicIp: "203.0.113.45",
@@ -23,14 +26,39 @@ export function InternetStatusCard() {
     incident: false,
   };
 
+  const handleNavigate = () => {
+    navigateAndScroll("/performance", '[data-tour="performance-header"]', {
+      block: "start",
+      highlight: true,
+    });
+  };
+
   return (
-    <Card className="border-slate-800 bg-slate-900/50" data-tour="status-card-internet">
+    <Card
+      className="border-slate-800 bg-slate-900/50 cursor-pointer transition hover:border-indigo-500/50 hover:shadow-lg hover:shadow-indigo-950/20"
+      data-tour="status-card-internet"
+      role="button"
+      tabIndex={0}
+      onClick={handleNavigate}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          handleNavigate();
+        }
+      }}
+    >
       <CardHeader>
         <div className="flex items-start justify-between">
           <div className="space-y-1">
             <CardTitle className="flex items-center gap-2 text-base">
               <Globe className="h-4 w-4 text-indigo-400" />
               Internet Status
+              <InfoBadge
+                content="Preview WAN status (public IP, uptime, throughput). Live data will come from telemetry wiring."
+                aria-label="Internet status info"
+              >
+                i
+              </InfoBadge>
             </CardTitle>
             <CardDescription className="text-xs">
               WAN connection details

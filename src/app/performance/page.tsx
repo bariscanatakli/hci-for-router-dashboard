@@ -10,6 +10,7 @@ import { PerformanceSample } from "@/lib/types/performance";
 import { useSettingsState } from "@/store/settingsStore";
 import { Button } from "@/components/ui/button";
 import { useFeedback } from "@/components/ui/feedback";
+import { InfoBadge } from "@/components/ui/info-badge";
 
 const mockSamples: PerformanceSample[] = [
   { timestamp: Date.now() - 60000 * 11, downloadMbps: 85, uploadMbps: 18, latencyMs: 24 },
@@ -49,11 +50,24 @@ export default function PerformancePage() {
 
   return (
     <div className="space-y-8" data-tour="page-performance">
-      <header className="space-y-2" data-tour="performance-header">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-50" data-tour="performance-heading">Performance</h1>
-        <p className="text-sm text-slate-400">
-          Monitor throughput, latency, and reliability trends. Data is mocked until telemetry is connected.
-        </p>
+      <header className="flex items-center gap-3" data-tour="performance-header">
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-500 text-white shadow-lg shadow-indigo-900/40">
+          <Activity className="h-5 w-5" />
+        </div>
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <h1 className="text-3xl font-bold tracking-tight text-slate-50" data-tour="performance-heading">Performance</h1>
+            <InfoBadge
+              content="Mock telemetry for throughput, latency, jitter. Use expert mode for more controls."
+              aria-label="Performance info"
+            >
+              i
+            </InfoBadge>
+          </div>
+          <p className="text-sm text-slate-400">
+            Monitor throughput, latency, and reliability trends. Data is mocked until telemetry is connected.
+          </p>
+        </div>
       </header>
 
       <section className="grid gap-4 md:grid-cols-3">
