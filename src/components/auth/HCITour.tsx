@@ -1026,21 +1026,6 @@ export function HCITour({ onComplete }: { onComplete: () => void }) {
           e.preventDefault();
           goBack();
         }
-      } else if (e.key === " ") {
-        // Space should not pause if user is on an interactive element
-        const isInteractiveElement = 
-          e.target instanceof HTMLInputElement ||
-          e.target instanceof HTMLTextAreaElement ||
-          e.target instanceof HTMLButtonElement ||
-          e.target instanceof HTMLSelectElement ||
-          (e.target instanceof HTMLElement && e.target.closest('[role="button"]')) ||
-          (e.target instanceof HTMLElement && e.target.closest('[role="tab"]')) ||
-          (e.target instanceof HTMLElement && e.target.closest('a'));
-        
-        if (!isInteractiveElement) {
-          e.preventDefault();
-          setIsPaused((p) => !p);
-        }
       }
     };
     window.addEventListener("keydown", handler);
