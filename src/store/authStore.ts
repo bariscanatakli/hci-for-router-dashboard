@@ -96,6 +96,7 @@ export function login(userName: string, options?: { usedDefaultPassword?: boolea
     userName,
     firstLogin: !wasAuthenticated,
     showTour: !wasAuthenticated,
+    showHCITour: false,
     passwordRequiresChange: options?.usedDefaultPassword ?? state.passwordRequiresChange,
     passwordSkipWarning: false,
     passwordLastChangedAt: state.passwordLastChangedAt ?? null,
